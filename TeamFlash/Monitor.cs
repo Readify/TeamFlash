@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Threading;
 
 namespace TeamFlash
@@ -50,7 +51,10 @@ namespace TeamFlash
             if (string.IsNullOrEmpty(deviceName.ToString()))
             {
                 // Search for the first match USB device, For USB IO Chips use USBIODS
-                DelcomBuildIndicator.DelcomGetNthDevice(DelcomBuildIndicator.USBDELVI, 0, deviceName);
+                var devicesFound = DelcomBuildIndicator.DelcomGetNthDevice(0, 0, deviceName);
+
+                if (devicesFound == 0)
+                    Console.WriteLine("Can't find build light device, or it's in use by another program");
             }
 
             var hUsb = DelcomBuildIndicator.DelcomOpenDevice(deviceName, 0); // open the device
