@@ -8,6 +8,8 @@ namespace TeamFlash
     {
         static void Main()
         {
+            Console.Write("TeamCity URL:");
+            var serverUrl = Console.ReadLine();
             Console.Write("Username:");
             var username = Console.ReadLine();
             Console.Write("Password:");
@@ -21,7 +23,7 @@ namespace TeamFlash
             {
                 List<string> failingBuildNames;
                 var lastBuildStatus = RetrieveBuildStatus(
-                    @"http://192.168.0.100:5555",
+                    serverUrl,
                     username,
                     password,
                     out failingBuildNames);
