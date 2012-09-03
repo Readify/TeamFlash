@@ -4,3 +4,5 @@ bin
 TestResults/
 *.zip
 ExternalDependencies
+_ReSharper*
+*.ncrunchsolution
