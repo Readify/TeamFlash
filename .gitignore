@@ -1,6 +1,7 @@
 obj
 bin
 *.suo
+*.user
 TestResults/
 *.zip
 ExternalDependencies
