@@ -1,0 +1,1 @@
+The latest compiled output is always available at https://tc.readifycloud.com/viewLog.html?buildTypeId=bt10&buildId=lastSuccessful&tab=artifacts&guest=1
