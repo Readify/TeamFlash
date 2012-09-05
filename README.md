@@ -12,9 +12,14 @@ It's tested with the [Delcom 904003](http://www.delcomproducts.com/productdetail
 
 ## Outputs
 
-Red = one or more builds are broken, and not being investigated
-Amber = all builds are either under investigation (requires TeamCity 7.1), or passing
-Green = all builds are passing
+<dl>
+  <dt>Red</dt>
+  <dd>one or more builds are broken, and not being investigated</dd>
+  <dt>Amber</dt>
+  <dd>all builds are either under investigation (requires TeamCity 7.1), or passing</dd>
+  <dt>Green</dt>
+  <dd>all builds are passing</dd>
+</dl>
 
 Paused builds are ignored.
 
