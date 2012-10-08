@@ -1,20 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Mono.Options;
 
 namespace TeamFlash
 {
     class Program
     {
-        static void Main()
+        static void Main(string[] args)
         {
-            Console.Write("TeamCity URL:");
-            var serverUrl = Console.ReadLine();
-            Console.Write("Username:");
-            var username = Console.ReadLine();
-            Console.Write("Password:");
-            var password = Console.ReadLine();
-            Console.Clear();
+			bool help = false;
+			string serverUrl = string.Empty;
+			string username = string.Empty;
+			string password = string.Empty;
+			bool guestAuth = false;
+			string specificProject = string.Empty;
+
+			var options = new OptionSet()
+					.Add("?|help|h", "Output options", option => help = option != null)
+					.Add("s=|url=|server=", "TeamCity URL", option => serverUrl = option)
+					.Add("u=|user=|username=", "Username", option => username = option)
+					.Add("p=|password=","Password", option => password = option)
+					.Add("g=|guest=|guestauth=", "Connect using anonymous guestAuth", option => guestAuth = option != null)
+					.Add("sp=|specificproject=","Constrain to a specific project", option => specificProject = option);
+
+			try
+			{
+				options.Parse(args);
+			}
+			catch (OptionException)
+			{
+				OutputFailureAndExit(options, "Incorrect arguments, usage is: ");
+			}
+
+			if (help)
+			{
+				Console.WriteLine(options);
+				System.Environment.Exit(0);
+			}
+
+			if (string.IsNullOrEmpty(serverUrl))
+				OutputFailureAndExit(options, "Must have a Server URL provided");
+
+			if (!guestAuth && string.IsNullOrEmpty(username))
+				OutputFailureAndExit(options, "Either provide username/password or use guestAuth = true");
+
 
             var monitor = new Monitor();
             TurnOffLights(monitor);
@@ -26,6 +56,7 @@ namespace TeamFlash
                     serverUrl,
                     username,
                     password,
+					specificProject,
                     out failingBuildNames);
                 switch (lastBuildStatus)
                 {
@@ -94,7 +125,7 @@ namespace TeamFlash
         }
 
         static BuildStatus RetrieveBuildStatus(
-            string serverUrl, string username, string password,
+            string serverUrl, string username, string password, string specificProject,
             out List<string> buildTypeNames)
         {
             dynamic query = new Query(serverUrl, username, password);
@@ -106,6 +137,9 @@ namespace TeamFlash
             {
                 foreach (var project in query.Projects)
                 {
+					if (!string.IsNullOrEmpty(specificProject) && !project.Name.Equals(specificProject))
+						continue;
+
                     if (!project.BuildTypesExists)
                     {
                         continue;
@@ -181,5 +215,13 @@ namespace TeamFlash
             return buildStatus;
         }
 
+		static OptionSet OutputFailureAndExit(OptionSet options, string message)
+		{
+			Console.WriteLine(message);
+			Console.WriteLine("teamflash.exe /s[erver] VALUE /u[sername] VALUE /p[assword] VALUE /g[uestauth] /sp[ecificproject] VALUE");
+			options.WriteOptionDescriptions(Console.Error);
+			System.Environment.Exit(1);
+			return options;
+		}
     }
 }

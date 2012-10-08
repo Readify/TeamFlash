@@ -14,6 +14,9 @@ namespace TeamFlash
         readonly string baseUrl;
         readonly string username;
         readonly string password;
+		readonly bool guestAuth;
+		readonly string restBasePath;
+
         XDocument document;
         XDocument childDocument;
 
@@ -21,15 +24,16 @@ namespace TeamFlash
             string baseUrl,
             string username,
             string password,
-            XDocument document = null)
+            XDocument document = null,
+			bool guestAuth = false)
         {
             this.baseUrl = baseUrl;
             this.username = username;
             this.password = password;
             this.document = document;
+			restBasePath = guestAuth ? @"/guestAuth/app/rest/" : @"/httpAuth/app/rest/";
         }
 
-        public string RestBasePath = @"/httpAuth/app/rest/";
         const string ExistsKeyword = "exists";
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
@@ -52,7 +56,7 @@ namespace TeamFlash
         {
             if (document == null)
             {
-                var queryUrl = baseUrl + RestBasePath + bindingName;
+                var queryUrl = baseUrl + restBasePath + bindingName;
                 document = Retrieve(queryUrl);
                 result = new Query(baseUrl, username, password, document);
                 return true;
@@ -188,10 +192,9 @@ namespace TeamFlash
         {
             if (client == null)
             {
-                client = new WebClient
-                {
-                    Credentials = new NetworkCredential(username, password)
-                };
+				client = new WebClient();
+                if (string.IsNullOrEmpty(username))
+				    client.Credentials = new NetworkCredential(username, password);
                 client.Headers.Add("Accepts:text/xml");
             }
 
