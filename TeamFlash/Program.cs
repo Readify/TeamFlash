@@ -9,20 +9,20 @@ namespace TeamFlash
     {
         static void Main(string[] args)
         {
-			bool help = false;
-			string serverUrl = string.Empty;
-			string username = string.Empty;
-			string password = string.Empty;
-			bool guestAuth = false;
-			string specificProject = string.Empty;
+			var help = false;
+			var serverUrl = string.Empty;
+			var username = string.Empty;
+			var password = string.Empty;
+			var guestAuth = false;
+			var specificProject = string.Empty;
 
 			var options = new OptionSet()
 					.Add("?|help|h", "Output options", option => help = option != null)
-					.Add("s=|url=|server=", "TeamCity URL", option => serverUrl = option)
-					.Add("u=|user=|username=", "Username", option => username = option)
-					.Add("p=|password=","Password", option => password = option)
-					.Add("g=|guest=|guestauth=", "Connect using anonymous guestAuth", option => guestAuth = option != null)
-					.Add("sp=|specificproject=","Constrain to a specific project", option => specificProject = option);
+					.Add("s|url=|server=", "TeamCity URL", option => serverUrl = option)
+					.Add("u|user=|username=", "Username", option => username = option)
+					.Add("p|password=","Password", option => password = option)
+					.Add("g|guest|guestauth", "Connect using anonymous guestAuth", option => guestAuth = option != null)
+					.Add("sp|specificproject=","Constrain to a specific project", option => specificProject = option);
 
 			try
 			{
@@ -57,6 +57,7 @@ namespace TeamFlash
                     username,
                     password,
 					specificProject,
+                    guestAuth,
                     out failingBuildNames);
                 switch (lastBuildStatus)
                 {
@@ -125,10 +126,10 @@ namespace TeamFlash
         }
 
         static BuildStatus RetrieveBuildStatus(
-            string serverUrl, string username, string password, string specificProject,
+            string serverUrl, string username, string password, string specificProject, bool guestAuth,
             out List<string> buildTypeNames)
         {
-            dynamic query = new Query(serverUrl, username, password);
+            dynamic query = new Query(serverUrl, username, password, guestAuth: guestAuth);
             buildTypeNames = null;
 
             var buildStatus = BuildStatus.Passed;
@@ -137,7 +138,7 @@ namespace TeamFlash
             {
                 foreach (var project in query.Projects)
                 {
-					if (!string.IsNullOrEmpty(specificProject) && !project.Name.Equals(specificProject))
+					if (!string.IsNullOrEmpty(specificProject) && !project.name.Equals(specificProject))
 						continue;
 
                     if (!project.BuildTypesExists)
