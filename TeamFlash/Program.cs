@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Microsoft.CSharp.RuntimeBinder;
 using Mono.Options;
 
 namespace TeamFlash
@@ -18,7 +19,7 @@ namespace TeamFlash
 
 			var options = new OptionSet()
 					.Add("?|help|h", "Output options", option => help = option != null)
-					.Add("s|url=|server=", "TeamCity URL", option => serverUrl = option)
+					.Add("s=|url=|server=", "TeamCity URL", option => serverUrl = option)
 					.Add("u|user=|username=", "Username", option => username = option)
 					.Add("p|password=","Password", option => password = option)
 					.Add("g|guest|guestauth", "Connect using anonymous guestAuth", option => guestAuth = option != null)
@@ -49,8 +50,13 @@ namespace TeamFlash
             var monitor = new Monitor();
             TurnOffLights(monitor);
 
+            TestLights(monitor);
+
             while (!Console.KeyAvailable)
             {
+
+                TurnOnBuildCheckLight(monitor);
+
                 List<string> failingBuildNames;
                 var lastBuildStatus = RetrieveBuildStatus(
                     serverUrl,
@@ -97,6 +103,38 @@ namespace TeamFlash
             }
         }
 
+        static void TestLights(Monitor monitor)
+        {
+            var i = 0;
+
+            while (i < 1 &&
+                !Console.KeyAvailable)
+            {
+                i++;
+                TurnOnFailLight(monitor);
+                Thread.Sleep(800);
+                TurnOffLights(monitor);
+                Thread.Sleep(200);
+                TurnOnWarningLight(monitor);
+                Thread.Sleep(800);
+                TurnOffLights(monitor);
+                Thread.Sleep(200);
+                TurnOnSuccessLight(monitor);
+                Thread.Sleep(800);
+                TurnOffLights(monitor);
+                Thread.Sleep(200);
+            }
+            
+        }
+
+        static void TurnOnBuildCheckLight(Monitor monitor)
+        {
+            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
+            monitor.SetLed(DelcomBuildIndicator.GREENLED, true, true);
+            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
+        }
+
+        
         static void TurnOnSuccessLight(Monitor monitor)
         {
             monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
@@ -167,27 +205,26 @@ namespace TeamFlash
                         foreach (var property in latestBuild.Properties)
                         {
                             if ("system.BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                            "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                                "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
                             {
                                 isUnstableBuild = true;
                             }
 
                             if ("BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                            "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                                "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
                             {
                                 isUnstableBuild = true;
 
                             }
                         }
-
                         if (isUnstableBuild)
                         {
                             continue;
                         }
 
                         var buildId = buildType.Id;
-                        dynamic investigationQuery = new Query(serverUrl, username, password);
-                        investigationQuery.RestBasePath = @"/httpAuth/app/rest/buildTypes/id:" + buildId +@"/";
+                        dynamic investigationQuery = new Query(serverUrl, username, password, guestAuth: guestAuth);
+                        investigationQuery.RestBasePath = guestAuth ? @"/guestAuth/app/rest/buildTypes/id:" + buildId + @"/" : @"/httpAuth/app/rest/buildTypes/id:" + buildId + @"/";
                         buildStatus = BuildStatus.Failed;
              
                         foreach (var investigation in investigationQuery.Investigations)
