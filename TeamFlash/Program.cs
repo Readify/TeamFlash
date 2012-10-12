@@ -82,6 +82,10 @@ namespace TeamFlash
                     case BuildStatus.Failed:
                         TurnOnFailLight(monitor);
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
+                        foreach (var failingBuildName in failingBuildNames)
+                        {
+                            Console.WriteLine(string.Format("{0}",failingBuildName).PadLeft(20,' '));
+                        }
                         break;
                 }
 
@@ -163,87 +167,71 @@ namespace TeamFlash
             monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
         }
 
-        static BuildStatus RetrieveBuildStatus(
-            string serverUrl, string username, string password, string specificProject, bool guestAuth,
-            out List<string> buildTypeNames)
+        static BuildStatus RetrieveBuildStatus(string serverUrl, string username, string password, string specificProject, bool guestAuth, out List<string> buildTypeNames)
         {
+            var api = new TeamCityApi(serverUrl);
+
             dynamic query = new Query(serverUrl, username, password, guestAuth: guestAuth);
-            buildTypeNames = null;
+            buildTypeNames = new List<string>();
 
             var buildStatus = BuildStatus.Passed;
 
             try
             {
-                foreach (var project in query.Projects)
+                foreach (var buildType in api.GetBuildTypes())
                 {
-					if (!string.IsNullOrEmpty(specificProject) && !project.name.Equals(specificProject))
-						continue;
-
-                    if (!project.BuildTypesExists)
-                    {
+                    if (!string.IsNullOrEmpty(specificProject) && !buildType.ProjectName.Equals(specificProject))
                         continue;
-                    }
-                    foreach (var buildType in project.BuildTypes)
-                    {
-                        if ("true".Equals(buildType.Paused, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            continue;
-                        }
-                        var builds = buildType.Builds;
-                        var latestBuild = builds.First;
-                        if (latestBuild == null)
-                        {
-                            continue;
-                        }
 
-                        if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            continue;
-                        }
+                    var details = api.GetBuildTypeDetailsById(buildType.Id);
 
-                        var isUnstableBuild = false;
-                        foreach (var property in latestBuild.Properties)
-                        {
-                            if ("system.BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                                "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
-                            {
-                                isUnstableBuild = true;
-                            }
+                    if (details.Paused)
+                        continue;
 
-                            if ("BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                                "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
-                            {
-                                isUnstableBuild = true;
+                    var latestBuild = api.GetLatestBuildByBuildType(buildType.Id);
+                    if (latestBuild == null)
+                        continue;
 
-                            }
-                        }
-                        if (isUnstableBuild)
-                        {
-                            continue;
-                        }
 
-                        var buildId = buildType.Id;
-                        dynamic investigationQuery = new Query(serverUrl, username, password, guestAuth: guestAuth);
-                        investigationQuery.RestBasePath = guestAuth ? @"/guestAuth/app/rest/buildTypes/id:" + buildId + @"/" : @"/httpAuth/app/rest/buildTypes/id:" + buildId + @"/";
-                        buildStatus = BuildStatus.Failed;
-             
-                        foreach (var investigation in investigationQuery.Investigations)
-                        {
-                            var investigationState = investigation.State;
-                            if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
-                                "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
-                            {
-                                buildStatus = BuildStatus.Investigating;
-                            }
-                        }
+                    if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                        continue;
 
-                        if (buildStatus == BuildStatus.Failed)
-                        {
-                            return buildStatus;
-                        }
-                    }
 
+                    //var isUnstableBuild = false;
+                    //foreach (var property in latestBuild.Properties)
+                    //{
+                    //    if ("system.BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
+                    //        "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                    //    {
+                    //        isUnstableBuild = true;
+                    //    }
+
+                    //    if ("BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
+                    //        "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                    //    {
+                    //        isUnstableBuild = true;
+
+                    //    }
+                    //}
+                    //if (isUnstableBuild)
+                    //{
+                    //    continue;
+                    //}
+
+                    buildStatus = BuildStatus.Failed;
+                    buildTypeNames.Add(buildType.Name);
+                    //foreach (var investigation in buildType.Investigations)
+                    //{
+                    //    var investigationState = investigation.State;
+                    //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
+                    //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
+                    //    {
+                    //        buildStatus = BuildStatus.Investigating;
+                    //    }
+                    //}
                 }
+
+
             }
             catch (Exception)
             {
