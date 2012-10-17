@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Web;
 using RestSharp;
 
 namespace TeamFlash
@@ -28,16 +29,18 @@ namespace TeamFlash
 
         public BuildTypeDetails GetBuildTypeDetailsById(string id)
         {
-            var buildDetails = GetXmlBuildRequest("app/rest/buildTypes/id:{ID}", "ID", id);
+            var buildDetails = GetXmlBuildRequest("app/rest/buildTypes/id:{ID}", new Dictionary<string, string>(){{"ID", id}});
             var response = _client.Execute<BuildTypeDetails>(buildDetails);
             return response.Data;
         }
 
-        private static RestRequest GetXmlBuildRequest(string endpoint, string variable = null, string replacement = null)
+        private static RestRequest GetXmlBuildRequest(string endpoint, Dictionary<string,string> parameters = null)
         {
             var request = new RestRequest(endpoint, Method.GET);
-            if (variable != null && replacement != null)
-                request.AddParameter(variable, replacement, ParameterType.UrlSegment);
+            foreach (var parameter in parameters)
+            {
+                request.AddParameter(parameter.Key, parameter.Value, ParameterType.UrlSegment);
+            }
             request.RequestFormat = DataFormat.Xml;
             request.AddHeader("Accept", "application/xml");
             return request;
@@ -57,13 +60,6 @@ namespace TeamFlash
         {
             var latestBuild = GetLatestBuildByBuildType(buildType);
             return GetChangeDetailsByBuildId(latestBuild.Id);
-        }
-
-        public Build GetLatestBuildByBuildType(string buildType)
-        {
-            var builds = GetBuildsByBuildType(buildType);
-            var latestBuild = builds.OrderByDescending(b => b.BuildTypeId).FirstOrDefault();
-            return latestBuild;
         }
 
         public Build GetLatestSuccesfulBuildByBuildType(string buildType)
@@ -92,7 +88,7 @@ namespace TeamFlash
 
         public IEnumerable<Build> GetRunningBuildByBuildType(string buildType)
         {
-            var request = GetXmlBuildRequest("app/rest/builds/?locator=buildType:{BT},running:true", "BT", buildType);
+            var request = GetXmlBuildRequest("app/rest/builds/?locator=buildType:{BT},running:true", new Dictionary<string, string>(){{"BT", buildType}});
             var response = _client.Execute<List<Build>>(request).Data;
             return response;
         }
@@ -135,30 +131,44 @@ namespace TeamFlash
 
         public BuildDetails GetBuildDetailsByBuildId(string id)
         {
-            var request = GetXmlBuildRequest("app/rest/builds/id:{ID}", "ID", id);
+            var request = GetXmlBuildRequest("app/rest/builds/id:{ID}", new Dictionary<string, string>(){{"ID", id}});
             var response = _client.Execute<BuildDetails>(request);
             return response.Data;
         }
 
         public ChangeList GetChangeListByBuildId(string id)
         {
-            var request = GetXmlBuildRequest("app/rest/changes?build=id:{ID}", "ID", id);
+            var request = GetXmlBuildRequest("app/rest/changes?build=id:{ID}", new Dictionary<string, string>(){{"ID", id}});
             var response = _client.Execute<ChangeList>(request);
             return response.Data;
         }
 
         public ChangeDetail GetChangeDetailsByChangeId(string id)
         {
-            var request = GetXmlBuildRequest("app/rest/changes/id:{ID}", "ID", id);
+            var request = GetXmlBuildRequest("app/rest/changes/id:{ID}", new Dictionary<string, string>(){{"ID", id}});
             var response = _client.Execute<ChangeDetail>(request);
             return response.Data;
         }
 
         public IEnumerable<Build> GetBuildsByBuildType(string buildType)
         {
-            var request = GetXmlBuildRequest("app/rest/builds/?locator=buildType:{ID}", "ID", buildType);
+            var request = GetXmlBuildRequest("app/rest/builds/?locator=buildType:{ID}", new Dictionary<string, string>(){{"ID", buildType}});
             var response = _client.Execute<List<Build>>(request);
             return response.Data;
+        }
+
+        public IEnumerable<Build> GetLatestBuildByBuildTypeAndStatus(string buildType, string status)
+        {
+            var request = GetXmlBuildRequest("app/rest/builds/?locator=buildType:{ID},status:{STATUS}", new Dictionary<string, string>(){{"ID", buildType},{"STATUS",status}});
+            var response = _client.Execute<List<Build>>(request);
+            return response.Data;
+        }
+
+        public Build GetLatestBuildByBuildType(string buildType)
+        {
+            var request = GetXmlBuildRequest("app/rest/builds/?locator=buildType:{ID},count:1", new Dictionary<string, string>(){{"ID", buildType}});
+            var response = _client.Execute<List<Build>>(request);
+            return response.Data != null ? response.Data.FirstOrDefault() : null;
         }
 
         public IEnumerable<Project> GetProjects()
@@ -167,6 +177,13 @@ namespace TeamFlash
             var response = _client.Execute<List<Project>>(request);
             return response.Data;
 
+        }
+
+        public List<BuildType> GetBuildTypesByProjectName(string specificProject)
+        {
+            var request = GetXmlBuildRequest("app/rest/projects/{PROJECT}/buildTypes",new Dictionary<string, string>(){{"PROJECT", HttpUtility.UrlEncode(specificProject)}});
+            var response = _client.Execute<List<BuildType>>(request);
+            return response.Data;
         }
     }
 

@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
-using Microsoft.CSharp.RuntimeBinder;
 using Mono.Options;
 
 namespace TeamFlash
@@ -17,13 +18,19 @@ namespace TeamFlash
 			var guestAuth = false;
 			var specificProject = string.Empty;
 
-			var options = new OptionSet()
+            bool failOnFirstFailed = false;
+
+            string buildLies = string.Empty;
+
+            var options = new OptionSet()
 					.Add("?|help|h", "Output options", option => help = option != null)
 					.Add("s=|url=|server=", "TeamCity URL", option => serverUrl = option)
 					.Add("u|user=|username=", "Username", option => username = option)
 					.Add("p|password=","Password", option => password = option)
 					.Add("g|guest|guestauth", "Connect using anonymous guestAuth", option => guestAuth = option != null)
-					.Add("sp|specificproject=","Constrain to a specific project", option => specificProject = option);
+					.Add("sp|specificproject=","Constrain to a specific project", option => specificProject = option)
+                    .Add("f|failonfirstfailed", "Check until finding the first failed", option => failOnFirstFailed = option != null)
+                    .Add("l|lies=","Lie for these builds, say they are green", option => buildLies = option);
 
 			try
 			{
@@ -37,7 +44,7 @@ namespace TeamFlash
 			if (help)
 			{
 				Console.WriteLine(options);
-				System.Environment.Exit(0);
+				Environment.Exit(0);
 			}
 
 			if (string.IsNullOrEmpty(serverUrl))
@@ -51,45 +58,54 @@ namespace TeamFlash
             TurnOffLights(monitor);
 
             TestLights(monitor);
-
-            while (!Console.KeyAvailable)
+            try
             {
-
-                TurnOnBuildCheckLight(monitor);
-
-                List<string> failingBuildNames;
-                var lastBuildStatus = RetrieveBuildStatus(
-                    serverUrl,
-                    username,
-                    password,
-					specificProject,
-                    guestAuth,
-                    out failingBuildNames);
-                switch (lastBuildStatus)
+                while (!Console.KeyAvailable)
                 {
-                    case BuildStatus.Unavailable:
-                        TurnOffLights(monitor);
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Server unavailable");
-                        break;
-                    case BuildStatus.Passed:
-                        TurnOnSuccessLight(monitor);
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Passed");
-                        break;
-                    case BuildStatus.Investigating:
-                        TurnOnWarningLight(monitor);
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Investigating");
-                        break;
-                    case BuildStatus.Failed:
-                        TurnOnFailLight(monitor);
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
-                        foreach (var failingBuildName in failingBuildNames)
-                        {
-                            Console.WriteLine(string.Format("{0}",failingBuildName).PadLeft(20,' '));
-                        }
-                        break;
-                }
 
-                Wait();
+                    //TurnOnBuildCheckLight(monitor);
+
+                    List<string> failingBuildNames;
+                    var lies = new List<String>(buildLies.ToLowerInvariant().Split(','));
+                    var lastBuildStatus = RetrieveBuildStatus(
+                        serverUrl,
+                        username,
+                        password,
+                        specificProject,
+                        guestAuth,
+                        failOnFirstFailed,
+                        lies,
+                        out failingBuildNames);
+                    switch (lastBuildStatus)
+                    {
+                        case BuildStatus.Unavailable:
+                            TurnOffLights(monitor);
+                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Server unavailable");
+                            break;
+                        case BuildStatus.Passed:
+                            TurnOnSuccessLight(monitor);
+                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Passed");
+                            break;
+                        case BuildStatus.Investigating:
+                            TurnOnWarningLight(monitor);
+                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Investigating");
+                            break;
+                        case BuildStatus.Failed:
+                            TurnOnFailLight(monitor);
+                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
+                            foreach (var failingBuildName in failingBuildNames)
+                            {
+                                Console.WriteLine(string.Format("{0}", failingBuildName).PadLeft(20, ' '));
+                            }
+                            break;
+                    }
+
+                    Wait();
+                }
+            }
+            finally
+            {
+                TurnOffLights(monitor);                
             }
 
             TurnOffLights(monitor);
@@ -167,22 +183,21 @@ namespace TeamFlash
             monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
         }
 
-        static BuildStatus RetrieveBuildStatus(string serverUrl, string username, string password, string specificProject, bool guestAuth, out List<string> buildTypeNames)
+        static BuildStatus RetrieveBuildStatus(string serverUrl, string username, string password, string specificProject, bool guestAuth, bool failFast, List<string> buildLies, out List<string> buildTypeNames)
         {
             var api = new TeamCityApi(serverUrl);
 
-            dynamic query = new Query(serverUrl, username, password, guestAuth: guestAuth);
             buildTypeNames = new List<string>();
 
             var buildStatus = BuildStatus.Passed;
 
             try
             {
-                foreach (var buildType in api.GetBuildTypes())
+                List<BuildType> buildTypes = string.IsNullOrEmpty(specificProject) ? api.GetBuildTypes() : api.GetBuildTypesByProjectName(specificProject);
+                foreach (var buildType in buildTypes)
                 {
-                    if (!string.IsNullOrEmpty(specificProject) && !buildType.ProjectName.Equals(specificProject))
+                    if (buildLies.Contains(buildType.Name.ToLowerInvariant()))
                         continue;
-
                     var details = api.GetBuildTypeDetailsById(buildType.Id);
 
                     if (details.Paused)
@@ -220,6 +235,8 @@ namespace TeamFlash
 
                     buildStatus = BuildStatus.Failed;
                     buildTypeNames.Add(buildType.Name);
+                    if (failFast)
+                        return buildStatus;
                     //foreach (var investigation in buildType.Investigations)
                     //{
                     //    var investigationState = investigation.State;
@@ -230,8 +247,6 @@ namespace TeamFlash
                     //    }
                     //}
                 }
-
-
             }
             catch (Exception)
             {
