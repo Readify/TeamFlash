@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace TeamFlash
@@ -14,6 +15,10 @@ namespace TeamFlash
             var username = Console.ReadLine();
             Console.Write("Password:");
             var password = Console.ReadLine();
+            Console.Write("Comma separated build type ids (eg, \"bt64,bt12\"), or enter for all:");
+            var buildTypeIds = (Console.ReadLine() ?? "")
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .ToArray();
             Console.Clear();
 
             var monitor = new Monitor();
@@ -21,12 +26,11 @@ namespace TeamFlash
 
             while (!Console.KeyAvailable)
             {
-                List<string> failingBuildNames;
                 var lastBuildStatus = RetrieveBuildStatus(
                     serverUrl,
                     username,
                     password,
-                    out failingBuildNames);
+                    buildTypeIds);
                 switch (lastBuildStatus)
                 {
                     case BuildStatus.Unavailable:
@@ -95,10 +99,11 @@ namespace TeamFlash
 
         static BuildStatus RetrieveBuildStatus(
             string serverUrl, string username, string password,
-            out List<string> buildTypeNames)
+            IEnumerable<string> buildTypeIds)
         {
+            buildTypeIds = buildTypeIds.ToArray();
+
             dynamic query = new Query(serverUrl, username, password);
-            buildTypeNames = null;
 
             var buildStatus = BuildStatus.Passed;
 
@@ -112,6 +117,11 @@ namespace TeamFlash
                     }
                     foreach (var buildType in project.BuildTypes)
                     {
+                        if (buildTypeIds.Any() &&
+                            buildTypeIds.All(id => id != buildType.Id))
+                        {
+                            continue;
+                        }
                         if ("true".Equals(buildType.Paused, StringComparison.CurrentCultureIgnoreCase))
                         {
                             continue;
