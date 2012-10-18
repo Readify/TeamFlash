@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Xml.Serialization;
 
 namespace TeamFlash
 {
@@ -9,12 +11,15 @@ namespace TeamFlash
     {
         static void Main()
         {
-            var teamFlashConfig = new TeamFlashConfig();
+            var teamFlashConfig = LoadConfig();
 
             teamFlashConfig.ServerUrl = ReadConfig("TeamCity URL", teamFlashConfig.ServerUrl);
             teamFlashConfig.Username = ReadConfig("Username", teamFlashConfig.Username);
             var password = ReadConfig("Password", "");
             teamFlashConfig.BuildTypeIds = ReadConfig("Comma separated build type ids (eg, \"bt64,bt12\"), or * for all", teamFlashConfig.BuildTypeIds);
+
+            SaveConfig(teamFlashConfig);
+
             Console.Clear();
 
             var buildTypeIds = teamFlashConfig.BuildTypeIds == "*"
@@ -56,6 +61,36 @@ namespace TeamFlash
 
             TurnOffLights(monitor);
 
+        }
+
+        static TeamFlashConfig LoadConfig()
+        {
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var configFilePath = Path.Combine(appDataPath, @"TeamFlash\config.json");
+            if (!File.Exists(configFilePath))
+                return new TeamFlashConfig();
+
+            var serializer = new XmlSerializer(typeof(TeamFlashConfig));
+            using (var stream = File.OpenRead(configFilePath))
+            {
+                return (TeamFlashConfig)serializer.Deserialize(stream);
+            }
+        }
+
+        static void SaveConfig(TeamFlashConfig config)
+        {
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var teamFlashPath = Path.Combine(appDataPath, @"TeamFlash\");
+            if (!Directory.Exists(teamFlashPath))
+                Directory.CreateDirectory(teamFlashPath);
+
+            var configFilePath = Path.Combine(teamFlashPath, @"config.json");
+
+            var serializer = new XmlSerializer(typeof (TeamFlashConfig));
+            using (var stream = File.OpenWrite(configFilePath))
+            {
+                serializer.Serialize(stream, config);
+            }
         }
 
         static string ReadConfig(string name, string previousValue)
