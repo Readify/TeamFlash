@@ -7,19 +7,40 @@ namespace TeamFlash
 {
     class Program
     {
+        static string ReadConfig(string name, string previousValue)
+        {
+            string input = null;
+            while (string.IsNullOrEmpty(input))
+            {
+                Console.WriteLine("{0}?", name);
+                if (!string.IsNullOrEmpty(previousValue))
+                {
+                    Console.WriteLine("(press enter for previous value: {0})", previousValue);
+                }
+                input = Console.ReadLine();
+                if (!string.IsNullOrEmpty(previousValue) &&
+                    string.IsNullOrEmpty(input))
+                {
+                    input = previousValue;
+                }
+                Console.WriteLine();
+            }
+            return input;
+        }
+
         static void Main()
         {
-            Console.Write("TeamCity URL:");
-            var serverUrl = Console.ReadLine();
-            Console.Write("Username:");
-            var username = Console.ReadLine();
-            Console.Write("Password:");
-            var password = Console.ReadLine();
-            Console.Write("Comma separated build type ids (eg, \"bt64,bt12\"), or enter for all:");
-            var buildTypeIds = (Console.ReadLine() ?? "")
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                .ToArray();
+            var teamFlashConfig = new TeamFlashConfig();
+
+            teamFlashConfig.ServerUrl = ReadConfig("TeamCity URL", teamFlashConfig.ServerUrl);
+            teamFlashConfig.Username = ReadConfig("Username", teamFlashConfig.Username);
+            var password = ReadConfig("Password", "");
+            teamFlashConfig.BuildTypeIds = ReadConfig("Comma separated build type ids (eg, \"bt64,bt12\"), or * for all", teamFlashConfig.BuildTypeIds);
             Console.Clear();
+
+            var buildTypeIds = teamFlashConfig.BuildTypeIds == "*"
+                ? new string[0]
+                : teamFlashConfig.BuildTypeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToArray();
 
             var monitor = new Monitor();
             TurnOffLights(monitor);
@@ -27,8 +48,8 @@ namespace TeamFlash
             while (!Console.KeyAvailable)
             {
                 var lastBuildStatus = RetrieveBuildStatus(
-                    serverUrl,
-                    username,
+                    teamFlashConfig.ServerUrl,
+                    teamFlashConfig.Username,
                     password,
                     buildTypeIds);
                 switch (lastBuildStatus)
