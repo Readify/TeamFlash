@@ -7,27 +7,6 @@ namespace TeamFlash
 {
     class Program
     {
-        static string ReadConfig(string name, string previousValue)
-        {
-            string input = null;
-            while (string.IsNullOrEmpty(input))
-            {
-                Console.WriteLine("{0}?", name);
-                if (!string.IsNullOrEmpty(previousValue))
-                {
-                    Console.WriteLine("(press enter for previous value: {0})", previousValue);
-                }
-                input = Console.ReadLine();
-                if (!string.IsNullOrEmpty(previousValue) &&
-                    string.IsNullOrEmpty(input))
-                {
-                    input = previousValue;
-                }
-                Console.WriteLine();
-            }
-            return input;
-        }
-
         static void Main()
         {
             var teamFlashConfig = new TeamFlashConfig();
@@ -77,6 +56,27 @@ namespace TeamFlash
 
             TurnOffLights(monitor);
 
+        }
+
+        static string ReadConfig(string name, string previousValue)
+        {
+            string input = null;
+            while (string.IsNullOrEmpty(input))
+            {
+                Console.WriteLine("{0}?", name);
+                if (!string.IsNullOrEmpty(previousValue))
+                {
+                    Console.WriteLine("(press enter for previous value: {0})", previousValue);
+                }
+                input = Console.ReadLine();
+                if (!string.IsNullOrEmpty(previousValue) &&
+                    string.IsNullOrEmpty(input))
+                {
+                    input = previousValue;
+                }
+                Console.WriteLine();
+            }
+            return input;
         }
 
         static void Wait()
