@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Threading;
 using Mono.Options;
 
@@ -57,13 +55,16 @@ namespace TeamFlash
             var monitor = new Monitor();
             TurnOffLights(monitor);
 
+            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => TurnOffLights(monitor); 
+
+
             TestLights(monitor);
             try
             {
                 while (!Console.KeyAvailable)
                 {
 
-                    //TurnOnBuildCheckLight(monitor);
+                    FlashGreenBuildCheckLight(monitor);
 
                     List<string> failingBuildNames;
                     var lies = new List<String>(buildLies.ToLowerInvariant().Split(','));
@@ -147,7 +148,7 @@ namespace TeamFlash
             
         }
 
-        static void TurnOnBuildCheckLight(Monitor monitor)
+        static void FlashGreenBuildCheckLight(Monitor monitor)
         {
             monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
             monitor.SetLed(DelcomBuildIndicator.GREENLED, true, true);
@@ -193,7 +194,7 @@ namespace TeamFlash
 
             try
             {
-                List<BuildType> buildTypes = string.IsNullOrEmpty(specificProject) ? api.GetBuildTypes() : api.GetBuildTypesByProjectName(specificProject);
+                var buildTypes = string.IsNullOrEmpty(specificProject) ? api.GetBuildTypes() : api.GetBuildTypesByProjectName(specificProject);
                 foreach (var buildType in buildTypes)
                 {
                     if (buildLies.Contains(buildType.Name.ToLowerInvariant()))
@@ -256,13 +257,13 @@ namespace TeamFlash
             return buildStatus;
         }
 
-		static OptionSet OutputFailureAndExit(OptionSet options, string message)
+		static void OutputFailureAndExit(OptionSet options, string message)
 		{
 			Console.WriteLine(message);
 			Console.WriteLine("teamflash.exe /s[erver] VALUE /u[sername] VALUE /p[assword] VALUE /g[uestauth] /sp[ecificproject] VALUE");
 			options.WriteOptionDescriptions(Console.Error);
-			System.Environment.Exit(1);
-			return options;
+			Environment.Exit(1);
+		    return;
 		}
     }
 }
