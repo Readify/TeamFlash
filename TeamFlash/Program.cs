@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Mono.Options;
 
 namespace TeamFlash
@@ -55,16 +56,15 @@ namespace TeamFlash
             var monitor = new Monitor();
             TurnOffLights(monitor);
 
-            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => TurnOffLights(monitor); 
-
+            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => TurnOffLights(monitor);
 
             TestLights(monitor);
             try
             {
                 while (!Console.KeyAvailable)
                 {
-
-                    FlashGreenBuildCheckLight(monitor);
+                    Func<bool> until = () => true;
+                    Task.Factory.StartNew(() => FlashGreenBuildCheckLight(monitor, until));
 
                     List<string> failingBuildNames;
                     var lies = new List<String>(buildLies.ToLowerInvariant().Split(','));
@@ -77,6 +77,7 @@ namespace TeamFlash
                         failOnFirstFailed,
                         lies,
                         out failingBuildNames);
+                    until = () => false;
                     switch (lastBuildStatus)
                     {
                         case BuildStatus.Unavailable:
@@ -148,10 +149,10 @@ namespace TeamFlash
             
         }
 
-        static void FlashGreenBuildCheckLight(Monitor monitor)
+        static void FlashGreenBuildCheckLight(Monitor monitor, Func<bool> until )
         {
             monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, true, true);
+            monitor.SetLed(DelcomBuildIndicator.GREENLED, turnItOn: true, flashIt: true, flashFrequency: 100, flashDurationInMilliSeconds: 2000, finishWhen:until);
             monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
         }
 
@@ -191,7 +192,6 @@ namespace TeamFlash
             buildTypeNames = new List<string>();
 
             var buildStatus = BuildStatus.Passed;
-
             try
             {
                 var buildTypes = string.IsNullOrEmpty(specificProject) ? api.GetBuildTypes() : api.GetBuildTypesByProjectName(specificProject);

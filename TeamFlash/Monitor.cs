@@ -6,30 +6,60 @@ namespace TeamFlash
 {
     class Monitor
     {
-        public void SetLed(byte led, bool turnItOn, bool flashIt)
-        {
-            SetLed(led, turnItOn, flashIt, null, false);
-        }
-
         public void SetLed(byte led, bool turnItOn, bool flashIt, int? flashDurationInSeconds)
         {
-            SetLed(led, turnItOn, flashIt, flashDurationInSeconds, false);
+            if (flashDurationInSeconds != null)
+                SetLed(led, turnItOn, flashIt, flashDurationInMilliSeconds: flashDurationInSeconds.Value * 1000);
+            else
+                SetLed(led, turnItOn, flashIt);
         }
 
-        public void SetLed(byte led, bool turnItOn, bool flashIt, int? flashDurationInSeconds, bool turnOffAfterFlashing)
+        public void SetLed(byte led, bool turnItOn, bool flashIt, bool turnOffAfterFlashing = false , float? flashDurationInMilliSeconds = null, float? flashFrequency = null, Func<bool> finishWhen = null)
         {
             var hUsb = GetDelcomDeviceHandle(); // open the device
+            DateTime? until = null;
+            if (finishWhen == null)
+            {
+                finishWhen = () =>
+                    {
+                        if (!until.HasValue)
+                            until = DateTime.Now.AddSeconds(Convert.ToInt32(flashDurationInMilliSeconds / 1000));
+                        return DateTime.Now < until;
+                    };
+            }
             if (hUsb == 0) return;
             if (turnItOn)
             {
                 if (flashIt)
                 {
-                    DelcomBuildIndicator.DelcomLEDControl(hUsb, led, DelcomBuildIndicator.LEDFLASH);
-                    if (flashDurationInSeconds.HasValue)
+                    if (flashFrequency.HasValue)
                     {
-                        Thread.Sleep(flashDurationInSeconds.Value * 1000);
+                        var toggle = true;
+                        while (finishWhen())
+                        {
+                            
+                            DelcomBuildIndicator.DelcomLEDControl(hUsb, led, toggle ? DelcomBuildIndicator.LEDOFF : DelcomBuildIndicator.LEDON);
+                            Thread.Sleep(Convert.ToInt16(flashFrequency.Value));
+                            toggle = !toggle;
+                            switch (led)
+                            {
+                                case DelcomBuildIndicator.GREENLED :
+                                    led = DelcomBuildIndicator.BLUELED;
+                                    break;
+                                case DelcomBuildIndicator.BLUELED :
+                                    led = DelcomBuildIndicator.REDLED;
+                                    break;
+                                case DelcomBuildIndicator.REDLED :
+                                    led = DelcomBuildIndicator.GREENLED;
+                                    break;
+                            }
+                        }
                         var ledStatus = turnOffAfterFlashing ? DelcomBuildIndicator.LEDOFF : DelcomBuildIndicator.LEDON;
-                        DelcomBuildIndicator.DelcomLEDControl(hUsb, led, ledStatus);
+
+                    }
+                    else
+                    {
+                        DelcomBuildIndicator.DelcomLEDControl(hUsb, led, DelcomBuildIndicator.LEDFLASH);
                     }
                 }
                 else
