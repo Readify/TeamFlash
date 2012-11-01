@@ -7,8 +7,9 @@ namespace TeamFlash.Delcom
 {
     class Monitor
     {
-        private LedColour _currentColour;
         readonly object _lockObject = new Object();
+
+        public LedColour CurrentColour { get; private set; }
 
         private void SetLed(byte led, bool turnItOn, bool flashIt, int? flashDurationInSeconds)
         {
@@ -98,21 +99,32 @@ namespace TeamFlash.Delcom
 
         public void Blink()
         {
-            var oldColour = _currentColour;
+            var oldColour = CurrentColour;
             TurnOffLights();
-            Thread.Sleep(200);
+            Thread.Sleep(100);
+            ChangeColor(oldColour);
+        }
+
+        public void BlinkThenRevert(LedColour colour, int blinkInterval = 100)
+        {
+            var oldColour = CurrentColour;
+            TurnOffLights();
+            Thread.Sleep(100);
+            ChangeColor(colour);
+            Thread.Sleep(100);
             ChangeColor(oldColour);
         }
 
         public void Disco(double intervalInSeconds)
         {
             var until = DateTime.Now.AddSeconds(intervalInSeconds);
-            var oldColour = _currentColour;
+            var oldColour = CurrentColour;
             while (DateTime.Now < until)
             {
                 foreach (var color in Enum.GetValues(typeof (LedColour)).Cast<LedColour>())
                 {
                     ChangeColor(color);
+                    Thread.Sleep(100);
                 }
             }
             ChangeColor(oldColour);
@@ -125,27 +137,27 @@ namespace TeamFlash.Delcom
                 switch (colour)
                 {
                     case LedColour.Red:
-                        _currentColour = LedColour.Red;
+                        CurrentColour = LedColour.Red;
                         SetRGB(true, false, false);
                         break;
                     case LedColour.Green:
-                        _currentColour = LedColour.Red;
+                        CurrentColour = LedColour.Red;
                         SetRGB(false, true,false);
                         break;
                     case LedColour.Blue:
-                        _currentColour = LedColour.Blue;
+                        CurrentColour = LedColour.Blue;
                         SetRGB(false, false,true);
                         break;
                     case LedColour.Yellow:
-                        _currentColour = LedColour.Red;
+                        CurrentColour = LedColour.Red;
                         SetRGB(false, true,true);
                         break;
                     case LedColour.White:
-                        _currentColour = LedColour.Red;
+                        CurrentColour = LedColour.Red;
                         SetRGB(true, true,true);
                         break;
                     case LedColour.Purple:
-                        _currentColour = LedColour.Blue;
+                        CurrentColour = LedColour.Blue;
                         SetRGB(true, false,true);
                         break;
                     case LedColour.Off:
@@ -158,8 +170,8 @@ namespace TeamFlash.Delcom
         private void SetRGB(bool red, bool green, bool blue)
         {
             SetLed(DelcomBuildIndicator.REDLED, red, false);
-            SetLed(DelcomBuildIndicator.GREENLED, blue, false);
-            SetLed(DelcomBuildIndicator.BLUELED, green, false);
+            SetLed(DelcomBuildIndicator.GREENLED, green, false);
+            SetLed(DelcomBuildIndicator.BLUELED, blue, false);
         }
     }
 

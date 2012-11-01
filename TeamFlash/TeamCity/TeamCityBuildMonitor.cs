@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Timers;
 
 namespace TeamFlash
@@ -19,14 +20,16 @@ namespace TeamFlash
         public event EventHandler BuildSuccess = delegate { };
         public event EventHandler BuildPaused = delegate { };
         public event EventHandler BuildSkipped = delegate { };
+        public event EventHandler CheckSuccessfull = delegate { };
+        public event EventHandler CheckFailed = delegate { };
         public event EventHandler NoCompletedBuilds = delegate { };
         public event EventHandler ServerCheckException = delegate { };
+        readonly object _lockObject = new object();
 
         public TeamCityBuildMonitor(ITeamCityApi api, string specificProject, bool failFast, List<string> buildLies, double checkIntervalInSeconds)
         {
             _api = api;
             _checkIntervalInSeconds = checkIntervalInSeconds;
-            _timer.AutoReset = true;
             _failFast = failFast;
             _specificProject = specificProject;
             _buildLies = buildLies;
@@ -48,59 +51,70 @@ namespace TeamFlash
 
         private void CheckBuilds()
         {
-            var buildStatus = BuildStatus.Passed;
-            try
+            lock (_lockObject)
             {
-                var buildTypes = String.IsNullOrEmpty(_specificProject) ? _api.GetBuildTypes() : _api.GetBuildTypesByProjectName(_specificProject);
-                foreach (var buildType in buildTypes)
+                var buildStatus = BuildStatus.Passed;
+                try
                 {
-                    BuildChecked(this, new EventArgs());
-                    if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                    var buildTypes = String.IsNullOrEmpty(_specificProject)
+                                         ? _api.GetBuildTypes().ToList()
+                                         : _api.GetBuildTypesByProjectName(_specificProject).ToList();
+                    foreach (var buildType in buildTypes.ToList())
                     {
-                        BuildSkipped(this, new EventArgs());
-                        continue;
-                    }
-                    var details = _api.GetBuildTypeDetailsById(buildType.Id);
+                        BuildChecked(this, new EventArgs());
+                        if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                        {
+                            BuildSkipped(this, new EventArgs());
+                            continue;
+                        }
+                        var details = _api.GetBuildTypeDetailsById(buildType.Id);
 
-                    if (details.Paused)
+                        if (details.Paused)
+                        {
+                            BuildPaused(this, new EventArgs());
+                            continue;
+                        }
+
+                        var latestBuild = _api.GetLatestBuildByBuildType(buildType.Id);
+                        if (latestBuild == null)
+                        {
+                            NoCompletedBuilds(this, new EventArgs());
+                            continue;
+                        }
+
+
+                        if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            BuildSuccess(this, new EventArgs());
+                            continue;
+                        }
+
+                        BuildFail(this, new EventArgs());
+                        buildStatus = BuildStatus.Failed;
+                        if (_failFast)
+                        {
+                            CheckFailed(this, new EventArgs());
+                            return;
+                        }
+                        //foreach (var investigation in buildType.Investigations)
+                        //{
+                        //    var investigationState = investigation.State;
+                        //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
+                        //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
+                        //    {
+                        //        buildStatus = BuildStatus.Investigating;
+                        //    }
+                        //}
+                    }
+                    if (buildStatus == BuildStatus.Passed)
                     {
-                        BuildPaused(this, new EventArgs());
-                        continue;
+                        CheckSuccessfull(this, new EventArgs());
                     }
-                        
-                    var latestBuild = _api.GetLatestBuildByBuildType(buildType.Id);
-                    if (latestBuild == null)
-                    {
-                        NoCompletedBuilds(this, new EventArgs());
-                        continue;
-                    }
-
-
-                    if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
-                    { 
-                        continue;
-                    }
-
-                    BuildFail(this, new EventArgs());
-                    buildStatus = BuildStatus.Failed;
-                    if (_failFast)
-                        break;
-                    //foreach (var investigation in buildType.Investigations)
-                    //{
-                    //    var investigationState = investigation.State;
-                    //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
-                    //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
-                    //    {
-                    //        buildStatus = BuildStatus.Investigating;
-                    //    }
-                    //}
                 }
-                if (buildStatus == BuildStatus.Passed)
-                    BuildSuccess(this, new EventArgs());
-            }
-            catch (Exception)
-            {
-                ServerCheckException(this, new EventArgs());
+                catch (Exception)
+                {
+                    ServerCheckException(this, new EventArgs());
+                }
             }
         }
     }
