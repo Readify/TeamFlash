@@ -7,7 +7,7 @@ using RestSharp;
 
 namespace TeamFlash
 {
-    internal class TeamCityApi
+    public class TeamCityApi : ITeamCityApi
     {
         private readonly string _teamCityServer;
         private readonly RestClient _client;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using Mono.Options;
+using Monitor = TeamFlash.Delcom.Monitor;
 
 namespace TeamFlash
 {
@@ -15,10 +15,9 @@ namespace TeamFlash
 			var password = string.Empty;
 			var guestAuth = false;
 			var specificProject = string.Empty;
-
             bool failOnFirstFailed = false;
-
             string buildLies = string.Empty;
+            double pollInterval = 30;
 
             var options = new OptionSet()
 					.Add("?|help|h", "Output options", option => help = option != null)
@@ -28,7 +27,8 @@ namespace TeamFlash
 					.Add("g|guest|guestauth", "Connect using anonymous guestAuth", option => guestAuth = option != null)
 					.Add("sp|specificproject=","Constrain to a specific project", option => specificProject = option)
                     .Add("f|failonfirstfailed", "Check until finding the first failed", option => failOnFirstFailed = option != null)
-                    .Add("l|lies=","Lie for these builds, say they are green", option => buildLies = option);
+                    .Add("l|lies=","Lie for these builds, say they are green", option => buildLies = option)
+                    .Add("i|interval","Time interval in seconds to poll server.", option => pollInterval = option != null ? Convert.ToDouble(option) : 30);
 
 			try
 			{
@@ -51,219 +51,50 @@ namespace TeamFlash
 			if (!guestAuth && string.IsNullOrEmpty(username))
 				OutputFailureAndExit(options, "Either provide username/password or use guestAuth = true");
 
-
             var monitor = new Monitor();
-            TurnOffLights(monitor);
-
-            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => TurnOffLights(monitor); 
-
-
-            TestLights(monitor);
-            try
-            {
-                while (!Console.KeyAvailable)
-                {
-
-                    FlashGreenBuildCheckLight(monitor);
-
-                    List<string> failingBuildNames;
-                    var lies = new List<String>(buildLies.ToLowerInvariant().Split(','));
-                    var lastBuildStatus = RetrieveBuildStatus(
-                        serverUrl,
-                        username,
-                        password,
-                        specificProject,
-                        guestAuth,
-                        failOnFirstFailed,
-                        lies,
-                        out failingBuildNames);
-                    switch (lastBuildStatus)
-                    {
-                        case BuildStatus.Unavailable:
-                            TurnOffLights(monitor);
-                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Server unavailable");
-                            break;
-                        case BuildStatus.Passed:
-                            TurnOnSuccessLight(monitor);
-                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Passed");
-                            break;
-                        case BuildStatus.Investigating:
-                            TurnOnWarningLight(monitor);
-                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Investigating");
-                            break;
-                        case BuildStatus.Failed:
-                            TurnOnFailLight(monitor);
-                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
-                            foreach (var failingBuildName in failingBuildNames)
-                            {
-                                Console.WriteLine(string.Format("{0}", failingBuildName).PadLeft(20, ' '));
-                            }
-                            break;
-                    }
-
-                    Wait();
-                }
-            }
-            finally
-            {
-                TurnOffLights(monitor);                
-            }
-
-            TurnOffLights(monitor);
-
-        }
-
-        static void Wait()
-        {
-            var delayCount = 0;
-            while (delayCount < 30 &&
-                !Console.KeyAvailable)
-            {
-                delayCount++;
-                Thread.Sleep(1000);
-            }
-        }
-
-        static void TestLights(Monitor monitor)
-        {
-            var i = 0;
-
-            while (i < 1 &&
-                !Console.KeyAvailable)
-            {
-                i++;
-                TurnOnFailLight(monitor);
-                Thread.Sleep(800);
-                TurnOffLights(monitor);
-                Thread.Sleep(200);
-                TurnOnWarningLight(monitor);
-                Thread.Sleep(800);
-                TurnOffLights(monitor);
-                Thread.Sleep(200);
-                TurnOnSuccessLight(monitor);
-                Thread.Sleep(800);
-                TurnOffLights(monitor);
-                Thread.Sleep(200);
-            }
+            monitor.TurnOffLights();
             
-        }
+            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => monitor.TurnOffLights();
 
-        static void FlashGreenBuildCheckLight(Monitor monitor)
-        {
-            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, true, true);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
-        }
-
-        
-        static void TurnOnSuccessLight(Monitor monitor)
-        {
-            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, true, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
-        }
-
-        static void TurnOnWarningLight(Monitor monitor)
-        {
-            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, true, false);
-        }
-
-        static void TurnOnFailLight(Monitor monitor)
-        {
-            monitor.SetLed(DelcomBuildIndicator.REDLED, true, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
-        }
-
-        static void TurnOffLights(Monitor monitor)
-        {
-            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
-        }
-
-        static BuildStatus RetrieveBuildStatus(string serverUrl, string username, string password, string specificProject, bool guestAuth, bool failFast, List<string> buildLies, out List<string> buildTypeNames)
-        {
-            var api = new TeamCityApi(serverUrl);
-
-            buildTypeNames = new List<string>();
-
-            var buildStatus = BuildStatus.Passed;
-
-            try
+            monitor.TestLights();
+            monitor.Disco(2);
+            TeamCityBuildMonitor buildMonitor = null;
+            while (!Console.KeyAvailable)
             {
-                var buildTypes = string.IsNullOrEmpty(specificProject) ? api.GetBuildTypes() : api.GetBuildTypesByProjectName(specificProject);
-                foreach (var buildType in buildTypes)
+                try
                 {
-                    if (buildLies.Contains(buildType.Name.ToLowerInvariant()))
-                        continue;
-                    var details = api.GetBuildTypeDetailsById(buildType.Id);
-
-                    if (details.Paused)
-                        continue;
-
-                    var latestBuild = api.GetLatestBuildByBuildType(buildType.Id);
-                    if (latestBuild == null)
-                        continue;
-
-
-                    if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
-                        continue;
-
-
-                    //var isUnstableBuild = false;
-                    //foreach (var property in latestBuild.Properties)
-                    //{
-                    //    if ("system.BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                    //        "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
-                    //    {
-                    //        isUnstableBuild = true;
-                    //    }
-
-                    //    if ("BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                    //        "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
-                    //    {
-                    //        isUnstableBuild = true;
-
-                    //    }
-                    //}
-                    //if (isUnstableBuild)
-                    //{
-                    //    continue;
-                    //}
-
-                    buildStatus = BuildStatus.Failed;
-                    buildTypeNames.Add(buildType.Name);
-                    if (failFast)
-                        return buildStatus;
-                    //foreach (var investigation in buildType.Investigations)
-                    //{
-                    //    var investigationState = investigation.State;
-                    //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
-                    //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
-                    //    {
-                    //        buildStatus = BuildStatus.Investigating;
-                    //    }
-                    //}
+                    var lies = new List<String>(buildLies.ToLowerInvariant().Split(','));
+                    ITeamCityApi api = new TeamCityApi(serverUrl);
+                    buildMonitor = new TeamCityBuildMonitor(api, specificProject, failOnFirstFailed, lies, pollInterval);
+                    buildMonitor.BuildFail += (sender, eventArgs) =>
+                        {
+                            monitor.TurnOnFailLight();
+                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
+                        };
+                    buildMonitor.BuildChecked += (sender, eventArgs) => monitor.Blink();
+                    buildMonitor.BuildSuccess += (sender, eventArgs) =>
+                        {
+                            monitor.TurnOnSuccessLight();
+                            Console.WriteLine(DateTime.Now.ToShortTimeString() + " Passed");
+                        };
+                    buildMonitor.ServerCheckException += (sender, eventArgs) => Console.WriteLine(DateTime.Now.ToShortTimeString() + " Server unavailable");
+                    buildMonitor.Start();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
                 }
             }
-            catch (Exception)
-            {
-                return BuildStatus.Unavailable;
-            }
-
-            return buildStatus;
+            if (buildMonitor != null) buildMonitor.Stop();
+            monitor.TurnOffLights();
         }
 
-		static void OutputFailureAndExit(OptionSet options, string message)
+        static void OutputFailureAndExit(OptionSet options, string message)
 		{
 			Console.WriteLine(message);
 			Console.WriteLine("teamflash.exe /s[erver] VALUE /u[sername] VALUE /p[assword] VALUE /g[uestauth] /sp[ecificproject] VALUE");
 			options.WriteOptionDescriptions(Console.Error);
 			Environment.Exit(1);
-		    return;
 		}
     }
 }
