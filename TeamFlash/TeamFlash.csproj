@@ -48,17 +48,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuildStatus.cs" />
-    <Compile Include="DelcomBuildIndicator.cs" />
-    <Compile Include="Monitor.cs" />
+    <Compile Include="Delcom\BuildStatus.cs" />
+    <Compile Include="Delcom\DelcomBuildIndicator.cs" />
+    <Compile Include="TeamCity\ITeamCityApi.cs" />
+    <Compile Include="Delcom\Monitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Options.cs" />
-    <Compile Include="TeamCityApi.cs" />
+    <Compile Include="TeamCity\TeamCityApi.cs" />
+    <Compile Include="TeamCity\TeamCityBuildMonitor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="DelcomDLL.dll">
+    <None Include="Delcom\DelcomDLL.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
