@@ -126,48 +126,40 @@ namespace TeamFlash.Delcom
                 {
                     case LedColour.Red:
                         _currentColour = LedColour.Red;
-                        SetLed(DelcomBuildIndicator.REDLED, true, false);
-                        SetLed(DelcomBuildIndicator.GREENLED, false, false);
-                        SetLed(DelcomBuildIndicator.BLUELED, false, false);
+                        SetRGB(true, false, false);
                         break;
                     case LedColour.Green:
                         _currentColour = LedColour.Red;
-                        SetLed(DelcomBuildIndicator.REDLED, false, false);
-                        SetLed(DelcomBuildIndicator.GREENLED, true, false);
-                        SetLed(DelcomBuildIndicator.BLUELED, false, false);
+                        SetRGB(false, true,false);
                         break;
                     case LedColour.Blue:
                         _currentColour = LedColour.Blue;
-                        SetLed(DelcomBuildIndicator.REDLED, false, false);
-                        SetLed(DelcomBuildIndicator.GREENLED, false, false);
-                        SetLed(DelcomBuildIndicator.BLUELED, true, false);
+                        SetRGB(false, false,true);
                         break;
                     case LedColour.Yellow:
                         _currentColour = LedColour.Red;
-                        SetLed(DelcomBuildIndicator.REDLED, false, false);
-                        SetLed(DelcomBuildIndicator.GREENLED, true, false);
-                        SetLed(DelcomBuildIndicator.BLUELED, true, false);
+                        SetRGB(false, true,true);
                         break;
                     case LedColour.White:
                         _currentColour = LedColour.Red;
-                        SetLed(DelcomBuildIndicator.REDLED, true, false);
-                        SetLed(DelcomBuildIndicator.GREENLED, true, false);
-                        SetLed(DelcomBuildIndicator.BLUELED, true, false);
+                        SetRGB(true, true,true);
                         break;
                     case LedColour.Purple:
                         _currentColour = LedColour.Blue;
-                        SetLed(DelcomBuildIndicator.REDLED, true, false);
-                        SetLed(DelcomBuildIndicator.GREENLED, false, false);
-                        SetLed(DelcomBuildIndicator.BLUELED, true, false);
+                        SetRGB(true, false,true);
                         break;
                     case LedColour.Off:
-                        _currentColour = LedColour.Blue;
-                        SetLed(DelcomBuildIndicator.REDLED, false, false);
-                        SetLed(DelcomBuildIndicator.GREENLED, false, false);
-                        SetLed(DelcomBuildIndicator.BLUELED, false, false);
+                        SetRGB(false, false,false);
                         break;
                 }
             }
+        }
+
+        private void SetRGB(bool red, bool green, bool blue)
+        {
+            SetLed(DelcomBuildIndicator.REDLED, red, false);
+            SetLed(DelcomBuildIndicator.GREENLED, blue, false);
+            SetLed(DelcomBuildIndicator.BLUELED, green, false);
         }
     }
 
