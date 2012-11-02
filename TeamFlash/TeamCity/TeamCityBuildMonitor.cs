@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace TeamFlash
@@ -59,6 +61,7 @@ namespace TeamFlash
                     var buildTypes = String.IsNullOrEmpty(_specificProject)
                                          ? _api.GetBuildTypes().ToList()
                                          : _api.GetBuildTypesByProjectName(_specificProject).ToList();
+                    var buildStatusList = new ConcurrentBag<BuildStatus>(); 
                     foreach (var buildType in buildTypes.ToList())
                     {
                         BuildChecked(this, new EventArgs());

@@ -109,9 +109,9 @@ namespace TeamFlash.Delcom
         {
             var oldColour = CurrentColour;
             TurnOffLights();
-            Thread.Sleep(100);
+            Thread.Sleep(blinkInterval);
             ChangeColor(colour);
-            Thread.Sleep(100);
+            Thread.Sleep(blinkInterval);
             ChangeColor(oldColour);
         }
 
@@ -141,7 +141,7 @@ namespace TeamFlash.Delcom
                         SetRGB(true, false, false);
                         break;
                     case LedColour.Green:
-                        CurrentColour = LedColour.Red;
+                        CurrentColour = LedColour.Green;
                         SetRGB(false, true,false);
                         break;
                     case LedColour.Blue:
@@ -149,18 +149,19 @@ namespace TeamFlash.Delcom
                         SetRGB(false, false,true);
                         break;
                     case LedColour.Yellow:
-                        CurrentColour = LedColour.Red;
+                        CurrentColour = LedColour.Yellow;
                         SetRGB(false, true,true);
                         break;
                     case LedColour.White:
-                        CurrentColour = LedColour.Red;
+                        CurrentColour = LedColour.White;
                         SetRGB(true, true,true);
                         break;
                     case LedColour.Purple:
-                        CurrentColour = LedColour.Blue;
+                        CurrentColour = LedColour.Purple;
                         SetRGB(true, false,true);
                         break;
                     case LedColour.Off:
+                        CurrentColour = LedColour.Off;
                         SetRGB(false, false,false);
                         break;
                 }
