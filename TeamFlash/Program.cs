@@ -71,7 +71,7 @@ namespace TeamFlash
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
                     };
                 buildMonitor.BuildChecked += (sender, eventArgs) => monitor.Blink();
-                var blinkInterval = 15;
+                var blinkInterval = 30;
                 buildMonitor.BuildPaused += (sender, eventArgs) => monitor.BlinkThenRevert(LedColour.Yellow,blinkInterval);
                 buildMonitor.BuildSkipped += (sender, eventArgs) => monitor.BlinkThenRevert(LedColour.Purple,blinkInterval);
                 buildMonitor.BuildSuccess += (sender, eventArgs) => monitor.BlinkThenRevert(LedColour.Green, blinkInterval);
