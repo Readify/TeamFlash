@@ -76,6 +76,7 @@ namespace TeamFlash
                 buildMonitor.BuildSkipped += (sender, eventArgs) => monitor.BlinkThenRevert(LedColour.Purple,blinkInterval);
                 buildMonitor.BuildSuccess += (sender, eventArgs) => monitor.BlinkThenRevert(LedColour.Green, blinkInterval);
                 buildMonitor.BuildFail += (sender, eventArgs) => monitor.BlinkThenRevert(LedColour.Red, blinkInterval);
+                buildMonitor.BuildUnknown += (sender, eventArgs) => monitor.BlinkThenRevert(LedColour.Yellow, blinkInterval);
                 buildMonitor.CheckSuccessfull += (sender, eventArgs) =>
                     {
                         monitor.TurnOnSuccessLight();

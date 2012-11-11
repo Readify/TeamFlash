@@ -22,6 +22,7 @@ namespace TeamFlash
         public event EventHandler BuildSuccess = delegate { };
         public event EventHandler BuildPaused = delegate { };
         public event EventHandler BuildSkipped = delegate { };
+        public event EventHandler BuildUnknown = delegate { };
         public event EventHandler CheckSuccessfull = delegate { };
         public event EventHandler CheckFailed = delegate { };
         public event EventHandler NoCompletedBuilds = delegate { };
@@ -89,6 +90,12 @@ namespace TeamFlash
                         if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
                         {
                             BuildSuccess(this, new EventArgs());
+                            continue;
+                        }
+
+                        if ("UNKNOWN".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            BuildUnknown(this, new EventArgs());
                             continue;
                         }
 
