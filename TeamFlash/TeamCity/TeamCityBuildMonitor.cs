@@ -40,6 +40,7 @@ namespace TeamFlash
 
         public void Start()
         {
+            CheckBuilds();
             _timer = new Timer(_checkIntervalInSeconds) {AutoReset = true};
             _timer.Elapsed += (sender, args) => CheckBuilds();
             ServerCheckStarted(this, new EventArgs());
@@ -62,63 +63,68 @@ namespace TeamFlash
                     var buildTypes = String.IsNullOrEmpty(_specificProject)
                                          ? _api.GetBuildTypes().ToList()
                                          : _api.GetBuildTypesByProjectName(_specificProject).ToList();
-                    var buildStatusList = new ConcurrentBag<BuildStatus>(); 
-                    foreach (var buildType in buildTypes.ToList())
-                    {
-                        BuildChecked(this, new EventArgs());
-                        if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                    Parallel.ForEach(buildTypes.ToList(), buildType =>
                         {
-                            BuildSkipped(this, new EventArgs());
-                            continue;
-                        }
-                        var details = _api.GetBuildTypeDetailsById(buildType.Id);
+                            {
+                                BuildChecked(this, new EventArgs());
+                                if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                                {
+                                    BuildSkipped(this, new EventArgs());
+                                    return;
+                                }
+                                var details = _api.GetBuildTypeDetailsById(buildType.Id);
 
-                        if (details.Paused)
-                        {
-                            BuildPaused(this, new EventArgs());
-                            continue;
-                        }
+                                if (details.Paused)
+                                {
+                                    BuildPaused(this, new EventArgs());
+                                    return;
+                                }
 
-                        var latestBuild = _api.GetLatestBuildByBuildType(buildType.Id);
-                        if (latestBuild == null)
-                        {
-                            NoCompletedBuilds(this, new EventArgs());
-                            continue;
-                        }
+                                var latestBuild = _api.GetLatestBuildByBuildType(buildType.Id);
+                                if (latestBuild == null)
+                                {
+                                    NoCompletedBuilds(this, new EventArgs());
+                                    return;
+                                }
 
 
-                        if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            BuildSuccess(this, new EventArgs());
-                            continue;
-                        }
+                                if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    BuildSuccess(this, new EventArgs());
+                                    return;
+                                }
 
-                        if ("UNKNOWN".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            BuildUnknown(this, new EventArgs());
-                            continue;
-                        }
+                                if ("UNKNOWN".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    BuildUnknown(this, new EventArgs());
+                                    return;
+                                }
 
-                        BuildFail(this, new EventArgs());
-                        buildStatus = BuildStatus.Failed;
-                        if (_failFast)
-                        {
-                            CheckFailed(this, new EventArgs());
-                            return;
-                        }
-                        //foreach (var investigation in buildType.Investigations)
-                        //{
-                        //    var investigationState = investigation.State;
-                        //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
-                        //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
-                        //    {
-                        //        buildStatus = BuildStatus.Investigating;
-                        //    }
-                        //}
-                    }
+                                BuildFail(this, new EventArgs());
+                                buildStatus = BuildStatus.Failed;
+                                if (_failFast)
+                                {
+                                    CheckFailed(this, new EventArgs());
+                                    return;
+                                }
+                                //foreach (var investigation in buildType.Investigations)
+                                //{
+                                //    var investigationState = investigation.State;
+                                //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
+                                //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
+                                //    {
+                                //        buildStatus = BuildStatus.Investigating;
+                                //    }
+                                //}
+                            }
+                        });
                     if (buildStatus == BuildStatus.Passed)
                     {
                         CheckSuccessfull(this, new EventArgs());
+                    }
+                    else
+                    {
+                        CheckFailed(this, new EventArgs());
                     }
                 }
                 catch (Exception)

@@ -12,6 +12,7 @@ namespace TeamFlash
     {
         private readonly string _teamCityServer;
         private readonly RestClient _client;
+        private object _lockObject = new object();
 
         public TeamCityApi(string server)
         {
@@ -177,7 +178,8 @@ namespace TeamFlash
             IRestResponse<T> response = null;
             try
             {
-                response = _client.Execute<T>(request);
+                lock(_lockObject)
+                    response = _client.Execute<T>(request);
             }
             catch (SocketException e) { }
             
