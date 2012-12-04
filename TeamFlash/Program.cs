@@ -67,14 +67,22 @@ namespace TeamFlash
         {
             var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var configFilePath = Path.Combine(appDataPath, @"TeamFlash\config.json");
-            if (!File.Exists(configFilePath))
-                return new TeamFlashConfig();
-
-            var serializer = new XmlSerializer(typeof(TeamFlashConfig));
-            using (var stream = File.OpenRead(configFilePath))
+            try
             {
-                return (TeamFlashConfig)serializer.Deserialize(stream);
+                if (!File.Exists(configFilePath))
+                    return new TeamFlashConfig();
+
+                var serializer = new XmlSerializer(typeof(TeamFlashConfig));
+                using (var stream = File.OpenRead(configFilePath))
+                {
+                    return (TeamFlashConfig)serializer.Deserialize(stream);
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("The following exception occurred loading the config file \"{0}\":{2}Message: {1}{2}Feel free to quit and fix it or re-enter your server details...", configFilePath, ex.Message, Environment.NewLine);
+            }
+            return new TeamFlashConfig();
         }
 
         static void SaveConfig(TeamFlashConfig config)
@@ -86,7 +94,7 @@ namespace TeamFlash
 
             var configFilePath = Path.Combine(teamFlashPath, @"config.json");
 
-            var serializer = new XmlSerializer(typeof (TeamFlashConfig));
+            var serializer = new XmlSerializer(typeof(TeamFlashConfig));
             using (var stream = File.OpenWrite(configFilePath))
             {
                 serializer.Serialize(stream, config);
@@ -218,9 +226,9 @@ namespace TeamFlash
 
                         var buildId = buildType.Id;
                         dynamic investigationQuery = new Query(serverUrl, username, password);
-                        investigationQuery.RestBasePath = @"/httpAuth/app/rest/buildTypes/id:" + buildId +@"/";
+                        investigationQuery.RestBasePath = @"/httpAuth/app/rest/buildTypes/id:" + buildId + @"/";
                         buildStatus = BuildStatus.Failed;
-             
+
                         foreach (var investigation in investigationQuery.Investigations)
                         {
                             var investigationState = investigation.State;
