@@ -52,8 +52,7 @@ namespace TeamFlash
         {
             if (document == null)
             {
-                var queryUrl = baseUrl + RestBasePath + bindingName;
-                document = Retrieve(queryUrl);
+                Load(bindingName);
                 result = new Query(baseUrl, username, password, document);
                 return true;
             }
@@ -124,6 +123,12 @@ namespace TeamFlash
 
             result = null;
             return false;
+        }
+
+        public void Load(string relativeUrl = "")
+        {
+            var url = baseUrl + RestBasePath + relativeUrl;
+            document = Retrieve(url);
         }
 
         bool TryRetrieveChildDocument(XDocument parentDocument, out XDocument childDocument)

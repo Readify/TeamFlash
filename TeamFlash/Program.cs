@@ -199,7 +199,13 @@ namespace TeamFlash
 
                         if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
                         {
-                            continue;
+                            dynamic runningBuild = new Query(serverUrl, username, password) { RestBasePath = string.Format("/httpAuth/app/rest/buildTypes/id:{0}/builds/running:any", buildType.Id) };
+
+                            runningBuild.Load();
+                            if ("success".Equals(runningBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                continue;
+                            }
                         }
 
                         var isUnstableBuild = false;
