@@ -66,6 +66,7 @@ namespace TeamFlash
         [DllImport("delcomdll.dll", EntryPoint = "DelcomGetDLLDate")]
         public static extern int DelcomGetDLLDate(StringBuilder DateString);
 
+
         // Generic Functions
 
         //Gets DeviceCount
@@ -159,18 +160,15 @@ namespace TeamFlash
 
         // USBIODS - USB IO Functions
 
-        // Write Port pins
+        // Set Ports
         [DllImport("delcomdll.dll", EntryPoint = "DelcomWritePin")]
         public static extern int DelcomWritePin(uint DeviceHandle, byte Port, byte Pin, byte Value);
 
 
-        // Write Ports
+        // Set Ports
         [DllImport("delcomdll.dll", EntryPoint = "DelcomWritePorts")]
         public static extern int DelcomWritePorts(uint DeviceHandle, byte Port0, byte Port1);
 
-        // Setup Ports
-        [DllImport("delcomdll.dll", EntryPoint = "DelcomSetupPorts")]
-        public static extern int DelcomSetupPorts(uint DeviceHandle, byte Port, byte Mode0, byte Mode1);
 
 
         // Get Ports 
