@@ -18,12 +18,12 @@ namespace TeamFlash
         {
             _teamCityServer = server;
             _client = new RestClient(_teamCityServer + "/guestAuth/");
+            _client.DefaultParameters.Add(new Parameter{Name = "Accept", Value = "application/xml", Type = ParameterType.HttpHeader});
         }
 
         public List<BuildType> GetBuildTypes()
         {
             var request = new RestRequest("app/rest/buildTypes", Method.GET) { RequestFormat = DataFormat.Xml };
-            request.AddHeader("Accept", "application/xml");
 
             var buildConfigs = _client.Execute<List<BuildType>>(request);
             return buildConfigs.Data;
