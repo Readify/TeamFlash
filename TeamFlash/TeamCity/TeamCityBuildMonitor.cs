@@ -63,59 +63,62 @@ namespace TeamFlash
                     var buildTypes = String.IsNullOrEmpty(_specificProject)
                                          ? _api.GetBuildTypes().ToList()
                                          : _api.GetBuildTypesByProjectName(_specificProject).ToList();
-                    Parallel.ForEach(buildTypes.ToList(), buildType =>
+                    Parallel.ForEach(buildTypes.ToList(), (buildType, loopState) =>
                         {
                             {
-                                BuildChecked(this, new EventArgs());
-                                if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                                if (!loopState.IsStopped)
                                 {
-                                    BuildSkipped(this, new EventArgs());
-                                    return;
-                                }
-                                var details = _api.GetBuildTypeDetailsById(buildType.Id);
+                                    BuildChecked(this, new EventArgs());
+                                    if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                                    {
+                                        BuildSkipped(this, new EventArgs());
+                                        return;
+                                    }
+                                    var details = _api.GetBuildTypeDetailsById(buildType.Id);
 
-                                if (details.Paused)
-                                {
-                                    BuildPaused(this, new EventArgs());
-                                    return;
-                                }
+                                    if (details.Paused)
+                                    {
+                                        BuildPaused(this, new EventArgs());
+                                        return;
+                                    }
 
-                                var latestBuild = _api.GetLatestBuildByBuildType(buildType.Id);
-                                if (latestBuild == null)
-                                {
-                                    NoCompletedBuilds(this, new EventArgs());
-                                    return;
-                                }
+                                    var latestBuild = _api.GetLatestBuildByBuildType(buildType.Id);
+                                    if (latestBuild == null)
+                                    {
+                                        NoCompletedBuilds(this, new EventArgs());
+                                        return;
+                                    }
 
 
-                                if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
-                                {
-                                    BuildSuccess(this, new EventArgs());
-                                    return;
-                                }
+                                    if ("success".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                                    {
+                                        BuildSuccess(this, new EventArgs());
+                                        return;
+                                    }
 
-                                if ("UNKNOWN".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
-                                {
-                                    BuildUnknown(this, new EventArgs());
-                                    return;
-                                }
+                                    if ("UNKNOWN".Equals(latestBuild.Status, StringComparison.CurrentCultureIgnoreCase))
+                                    {
+                                        BuildUnknown(this, new EventArgs());
+                                        return;
+                                    }
 
-                                BuildFail(this, new EventArgs());
-                                buildStatus = BuildStatus.Failed;
-                                if (_failFast)
-                                {
-                                    CheckFailed(this, new EventArgs());
-                                    return;
+                                    BuildFail(this, new EventArgs());
+                                    buildStatus = BuildStatus.Failed;
+                                    if (_failFast)
+                                    {
+                                        CheckFailed(this, new EventArgs());
+                                        loopState.Stop();
+                                    }
+                                    //foreach (var investigation in buildType.Investigations)
+                                    //{
+                                    //    var investigationState = investigation.State;
+                                    //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
+                                    //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
+                                    //    {
+                                    //        buildStatus = BuildStatus.Investigating;
+                                    //    }
+                                    //}
                                 }
-                                //foreach (var investigation in buildType.Investigations)
-                                //{
-                                //    var investigationState = investigation.State;
-                                //    if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
-                                //        "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
-                                //    {
-                                //        buildStatus = BuildStatus.Investigating;
-                                //    }
-                                //}
                             }
                         });
                     if (buildStatus == BuildStatus.Passed)
