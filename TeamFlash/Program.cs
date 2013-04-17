@@ -133,32 +133,57 @@ namespace TeamFlash
             }
         }
 
+#if __MonoCS__
+        static void SetLightColor(int color)
+        {
+            Linux.DelcomBuildIndicator.OpenDevice();
+            Linux.DelcomBuildIndicator.SetColor(color);
+            Linux.DelcomBuildIndicator.CloseDevice();
+        }
+#endif
+
         static void TurnOnSuccessLight(Monitor monitor)
         {
+#if __MonoCS__
+            SetLightColor(Linux.DelcomBuildIndicator.Green);
+#else
             monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
             monitor.SetLed(DelcomBuildIndicator.GREENLED, true, false);
             monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
+#endif
         }
 
         static void TurnOnWarningLight(Monitor monitor)
         {
+#if __MonoCS__
+            SetLightColor(Linux.DelcomBuildIndicator.Blue);
+#else
             monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
             monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
             monitor.SetLed(DelcomBuildIndicator.BLUELED, true, false);
+#endif
         }
 
         static void TurnOnFailLight(Monitor monitor)
         {
+#if __MonoCS__
+            SetLightColor(Linux.DelcomBuildIndicator.Red);
+#else
             monitor.SetLed(DelcomBuildIndicator.REDLED, true, false);
             monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
             monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
+#endif
         }
 
         static void TurnOffLights(Monitor monitor)
         {
+#if __MonoCS__
+            SetLightColor(Linux.DelcomBuildIndicator.Off);
+#else
             monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
             monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
             monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
+#endif
         }
 
         static BuildStatus RetrieveBuildStatus(

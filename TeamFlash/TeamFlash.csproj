@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="BuildStatus.cs" />
     <Compile Include="DelcomBuildIndicator.cs" />
+    <Compile Include="Linux\DelcomBuildIndicator.cs" />
     <Compile Include="Monitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
