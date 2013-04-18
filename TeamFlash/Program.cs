@@ -26,8 +26,13 @@ namespace TeamFlash
                 ? new string[0]
                 : teamFlashConfig.BuildTypeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToArray();
 
-            var monitor = new Monitor();
-            TurnOffLights(monitor);
+#if __MonoCS__
+            var buildLight = new Linux.BuildLight();
+#else
+            var buildLight = new BuildLight();
+#endif
+
+            buildLight.Off();
 
             while (!Console.KeyAvailable)
             {
@@ -39,19 +44,19 @@ namespace TeamFlash
                 switch (lastBuildStatus)
                 {
                     case BuildStatus.Unavailable:
-                        TurnOffLights(monitor);
+                        buildLight.Off();
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + " Server unavailable");
                         break;
                     case BuildStatus.Passed:
-                        TurnOnSuccessLight(monitor);
+                        buildLight.Success();
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + " Passed");
                         break;
                     case BuildStatus.Investigating:
-                        TurnOnWarningLight(monitor);
+                        buildLight.Warning();
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + " Investigating");
                         break;
                     case BuildStatus.Failed:
-                        TurnOnFailLight(monitor);
+                        buildLight.Fail();
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
                         break;
                 }
@@ -59,8 +64,7 @@ namespace TeamFlash
                 Wait();
             }
 
-            TurnOffLights(monitor);
-
+            buildLight.Off();
         }
 
         static TeamFlashConfig LoadConfig()
@@ -131,59 +135,6 @@ namespace TeamFlash
                 delayCount++;
                 Thread.Sleep(1000);
             }
-        }
-
-#if __MonoCS__
-        static void SetLightColor(int color)
-        {
-            Linux.DelcomBuildIndicator.OpenDevice();
-            Linux.DelcomBuildIndicator.SetColor(color);
-            Linux.DelcomBuildIndicator.CloseDevice();
-        }
-#endif
-
-        static void TurnOnSuccessLight(Monitor monitor)
-        {
-#if __MonoCS__
-            SetLightColor(Linux.DelcomBuildIndicator.Green);
-#else
-            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, true, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
-#endif
-        }
-
-        static void TurnOnWarningLight(Monitor monitor)
-        {
-#if __MonoCS__
-            SetLightColor(Linux.DelcomBuildIndicator.Blue);
-#else
-            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, true, false);
-#endif
-        }
-
-        static void TurnOnFailLight(Monitor monitor)
-        {
-#if __MonoCS__
-            SetLightColor(Linux.DelcomBuildIndicator.Red);
-#else
-            monitor.SetLed(DelcomBuildIndicator.REDLED, true, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
-#endif
-        }
-
-        static void TurnOffLights(Monitor monitor)
-        {
-#if __MonoCS__
-            SetLightColor(Linux.DelcomBuildIndicator.Off);
-#else
-            monitor.SetLed(DelcomBuildIndicator.REDLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.GREENLED, false, false);
-            monitor.SetLed(DelcomBuildIndicator.BLUELED, false, false);
-#endif
         }
 
         static BuildStatus RetrieveBuildStatus(
