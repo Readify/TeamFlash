@@ -4,11 +4,20 @@ TeamFlash is a super simple tool for connecting TeamCity to a Delcom USB build l
 
 It's tested with the [Delcom 904003](http://www.delcomproducts.com/productdetails.asp?productnum=904003) and [Delcom 804003](http://www.delcomproducts.com/productdetails.asp?productnum=804003) (old generation).
 
+And now you can run it on your [Raspberry Pi](http://raspberrypi.org) with Raspbian "wheezy"!
+
 ## Installing
 
+### On Windows
 1. Grab [the compiled bits, hot off our build server](https://tc.readifycloud.com/viewLog.html?buildTypeId=bt10&buildId=lastSuccessful&tab=artifacts&guest=1)
 2. Run them
 3. There is no installer
+
+### On RPi
+1. Install mono and git by running **sudo apt-get install mono-complete git**
+1. Clone [libdelcom](https://github.com/ducas/libdelcom.git) and install it
+2. Clone TeamFlash and run xbuild
+3. Run it...
 
 ## Outputs
 
