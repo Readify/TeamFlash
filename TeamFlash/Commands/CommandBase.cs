@@ -5,18 +5,17 @@ using TeamFlash.TeamCity;
 
 namespace TeamFlash.Commands
 {
-    internal class CommandBase : ConsoleCommand
+    abstract class CommandBase : ConsoleCommand
     {
-        private bool _help = false;
         private string _serverUrl = String.Empty;
         private string _username = String.Empty;
         private string _password = String.Empty;
-        private bool _guestAuth = false;
+        private bool _guestAuth;
         private string _specificProject = String.Empty;
-        private bool _failOnFirstFailed = false;
+        private bool _failOnFirstFailed;
         private string _buildLies = String.Empty;
         private double _pollInterval = 60000;
-        protected IBuildLight buildLight;
+        protected IBuildLight BuildLight;
 
         protected CommandBase()
         {
@@ -33,33 +32,28 @@ namespace TeamFlash.Commands
 
         public override int Run(string[] remainingArguments)
         {
-            buildLight.TurnOffLights();
-            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => buildLight.TurnOffLights();
+            BuildLight.TurnOffLights();
+            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) => BuildLight.TurnOffLights();
 
-            buildLight.TestLights();
-            buildLight.Disco(2);
-            buildLight.TurnOffLights();
+            BuildLight.TestLights();
+            BuildLight.Disco(2);
+            BuildLight.TurnOffLights();
             TeamCityBuildMonitor buildMonitor = null;
             try
             {
                 var lies = new List<string>(_buildLies.ToLowerInvariant().Split(';'));
                 ITeamCityApi api = new TeamCityApi(_serverUrl);
                 buildMonitor = new TeamCityBuildMonitor(api, _specificProject, _failOnFirstFailed, lies, _pollInterval);
+                const int blinkInterval = 30;
                 buildMonitor.CheckFailed += (sender, eventArgs) =>
                 {
-                    buildLight.TurnOnFailLight();
+                    BuildLight.TurnOnFailLight();
                     Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
                 };
-                buildMonitor.BuildChecked += (sender, eventArgs) => buildLight.Blink();
-                const int blinkInterval = 30;
-                buildMonitor.BuildPaused += (sender, eventArgs) => buildLight.BlinkThenRevert(LightColour.Yellow, blinkInterval);
-                buildMonitor.BuildSkipped += (sender, eventArgs) => buildLight.BlinkThenRevert(LightColour.Purple, blinkInterval);
-                buildMonitor.BuildSuccess += (sender, eventArgs) => buildLight.BlinkThenRevert(LightColour.Green, blinkInterval);
-                buildMonitor.BuildFail += (sender, eventArgs) => buildLight.BlinkThenRevert(LightColour.Red, blinkInterval);
-                buildMonitor.BuildUnknown += (sender, eventArgs) => buildLight.BlinkThenRevert(LightColour.Yellow, blinkInterval);
+                RegisterBuildEvents(buildMonitor, blinkInterval);
                 buildMonitor.CheckSuccessfull += (sender, eventArgs) =>
                 {
-                    buildLight.TurnOnSuccessLight();
+                    BuildLight.TurnOnSuccessLight();
                     Console.WriteLine(DateTime.Now.ToShortTimeString() + " Passed");
                 };
                 buildMonitor.ServerCheckException += (sender, eventArgs) => Console.WriteLine(DateTime.Now.ToShortTimeString() + " Server unavailable");
@@ -73,8 +67,10 @@ namespace TeamFlash.Commands
             {
             }
             if (buildMonitor != null) buildMonitor.Stop();
-            buildLight.TurnOffLights();
+            BuildLight.TurnOffLights();
             return 0;
         }
+
+        protected abstract void RegisterBuildEvents(TeamCityBuildMonitor buildMonitor, int blinkInterval);
     }
 }

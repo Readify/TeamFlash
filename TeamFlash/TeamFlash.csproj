@@ -78,9 +78,11 @@
     <Compile Include="Commands\DelcomCommand.cs" />
     <Compile Include="Commands\HueCommand.cs" />
     <Compile Include="Commands\HueRegisterCommand.cs" />
+    <Compile Include="BuildLightBase.cs" />
     <Compile Include="Delcom\DelcomBuildIndicator.cs" />
     <Compile Include="Hue\HueBuildLight.cs" />
     <Compile Include="IBuildLight.cs" />
+    <Compile Include="ILBundle.cs" />
     <Compile Include="LightColour.cs" />
     <Compile Include="TeamCity\ITeamCityApi.cs" />
     <Compile Include="Delcom\DelcomBuildLight.cs" />
@@ -94,11 +96,13 @@
     <None Include="DelcomDLL.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="ILBundle.targets" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.8\tools\Microsoft.Bcl.Build.targets" />
+  <Import Project="ILBundle.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

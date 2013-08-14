@@ -9,18 +9,16 @@ namespace TeamFlash.TeamCity
 {
     public class TeamCityApi : ITeamCityApi
     {
-        private readonly string _teamCityServer;
         private readonly RestClient _client;
-        private object _lockObject = new object();
+        private readonly object _lockObject = new object();
 
         public TeamCityApi(string server)
         {
-            _teamCityServer = server;
-            _client = new RestClient(_teamCityServer + "/guestAuth/");
+            _client = new RestClient(server + "/guestAuth/");
             _client.DefaultParameters.Add(new Parameter{Name = "Accept", Value = "application/xml", Type = ParameterType.HttpHeader});
         }
 
-        public List<BuildType> GetBuildTypes()
+        public IEnumerable<BuildType> GetBuildTypes()
         {
             var request = new RestRequest("app/rest/buildTypes", Method.GET) { RequestFormat = DataFormat.Xml };
 
@@ -30,7 +28,7 @@ namespace TeamFlash.TeamCity
 
         public BuildTypeDetails GetBuildTypeDetailsById(string id)
         {
-            var buildDetails = GetXmlBuildRequest("app/rest/buildTypes/id:{ID}", new Dictionary<string, string>(){{"ID", id}});
+            var buildDetails = GetXmlBuildRequest("app/rest/buildTypes/id:{ID}", new Dictionary<string, string> {{"ID", id}});
             var response = GetSafeResponse<BuildTypeDetails>(buildDetails);
             return response.Data;
         }
@@ -38,10 +36,11 @@ namespace TeamFlash.TeamCity
         private static RestRequest GetXmlBuildRequest(string endpoint, Dictionary<string,string> parameters = null)
         {
             var request = new RestRequest(endpoint, Method.GET);
-            foreach (var parameter in parameters)
-            {
-                request.AddParameter(parameter.Key, parameter.Value, ParameterType.UrlSegment);
-            }
+            if (parameters != null)
+                foreach (var parameter in parameters)
+                {
+                    request.AddParameter(parameter.Key, parameter.Value, ParameterType.UrlSegment);
+                }
             request.RequestFormat = DataFormat.Xml;
             request.AddHeader("Accept", "application/xml");
             return request;
@@ -193,7 +192,7 @@ namespace TeamFlash.TeamCity
 
         }
 
-        public List<BuildType> GetBuildTypesByProjectName(string specificProject)
+        public IEnumerable<BuildType> GetBuildTypesByProjectName(string specificProject)
         {
             var request = GetXmlBuildRequest("app/rest/projects/{PROJECT}/buildTypes",new Dictionary<string, string>(){{"PROJECT", HttpUtility.UrlEncode(specificProject)}});
             var response = GetSafeResponse<List<BuildType>>(request);

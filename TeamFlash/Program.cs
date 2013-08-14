@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using ManyConsole;
-using TeamFlash.Delcom;
-using TeamFlash.TeamCity;
 
 namespace TeamFlash
 {
     class Program
     {
         static int Main(string[] args)
+        {
+            ILBundle.RegisterAssemblyResolver();
+            return Run(args);
+        }
+
+        private static int Run(string[] args)
         {
             // locate any commands in the assembly (or use an IoC container, or whatever source)
             var commands = GetCommands().Where(c => c.GetType().Name != "CommandBase");

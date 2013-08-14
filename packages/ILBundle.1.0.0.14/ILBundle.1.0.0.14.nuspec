@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>ILBundle</id>
+    <version>1.0.0.14</version>
+    <title>ILBundle</title>
+    <authors>Ben Phegan</authors>
+    <owners>Ben Phegan</owners>
+    <projectUrl>http://github.com/BenPhegan/ILBundle</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A simple hook of the AssemblyResolve event along with automatic creation and population of an Assembly Resource with referenced assemblies.  Magical, ILMerge-like behaviour, without the merge!</description>
+    <releaseNotes />
+    <copyright />
+    <language />
+    <tags>ILMerge</tags>
+    <references />
+  </metadata>
+</package>

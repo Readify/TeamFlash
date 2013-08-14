@@ -4,7 +4,7 @@ namespace TeamFlash.TeamCity
 {
     public interface ITeamCityApi
     {
-        List<BuildType> GetBuildTypes();
+        IEnumerable<BuildType> GetBuildTypes();
         BuildTypeDetails GetBuildTypeDetailsById(string id);
         IEnumerable<Artifact> GetArtifactListByBuildType(string buildType);
         IEnumerable<ChangeDetail> GetChangeDetailsForLastBuildByBuildType(string buildType);
@@ -22,6 +22,6 @@ namespace TeamFlash.TeamCity
         IEnumerable<Build> GetLatestBuildByBuildTypeAndStatus(string buildType, string status);
         Build GetLatestBuildByBuildType(string buildType);
         IEnumerable<Project> GetProjects();
-        List<BuildType> GetBuildTypesByProjectName(string specificProject);
+        IEnumerable<BuildType> GetBuildTypesByProjectName(string specificProject);
     }
 }

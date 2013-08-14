@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Q42.HueApi;
 
 namespace TeamFlash.Hue
 {
-    class HueBuildLight : IBuildLight
+    class HueBuildLight : BuildLightBase, IBuildLight
     {
         private readonly HueClient _hueClient;
         private readonly List<string> _lights;
-        public LightColour CurrentLightColour { get; private set; }
+        private readonly object _lockObject = new object();
 
         public static string AppKey
         {
@@ -28,59 +27,59 @@ namespace TeamFlash.Hue
             _lights = lights.ToList();
         }
 
-        public void TestLights()
-        {
-            SendCommand("FF00AA");
-        }
-
-        private void SendCommand(string colour)
+        private void SetColour(string colour)
         {
             var command = new LightCommand();
             command.TurnOn().SetColor(colour);
             command.Alert = Alert.Once;
-            command.Effect = Effect.ColorLoop;
+            command.Effect = Effect.None;
             _hueClient.SendCommandAsync(command, _lights);
         }
 
-
-        public void TurnOnSuccessLight()
+        public new void TurnOffLights()
         {
-            SendCommand("FF00AA");
+            var command = new LightCommand();
+            command.TurnOff();
+            command.Effect = Effect.None;
+            _hueClient.SendCommandAsync(command, _lights);
         }
 
-        public void TurnOnWarningLight()
+        protected override void ChangeColor(LightColour colour)
         {
-            SendCommand("FF00AA");
-        }
-
-        public void TurnOnFailLight()
-        {
-            SendCommand("AAAAAA");
-        }
-
-        public void TurnOffLights()
-        {
-            SendCommand("999999");
-        }
-
-        public void Blink()
-        {
-            SendCommand("FF00AA");
-        }
-
-        public void BlinkThenRevert(LightColour lightColour, int blinkInterval = 100)
-        {
-            SendCommand("444444");
-        }
-
-        public void Disco(double intervalInSeconds)
-        {
-            SendCommand("FF00AA");
-        }
-
-        public LightColour CurrentColour
-        {
-            get { return LightColour.Blue; }
+            lock (_lockObject)
+            {
+                switch (colour)
+                {
+                    case LightColour.Red:
+                        CurrentColour = LightColour.Red;
+                        SetColour("FF0D00");
+                        break;
+                    case LightColour.Green:
+                        CurrentColour = LightColour.Green;
+                        SetColour("00FF00");
+                        break;
+                    case LightColour.Blue:
+                        CurrentColour = LightColour.Blue;
+                        SetColour("0000FF");
+                        break;
+                    case LightColour.Yellow:
+                        CurrentColour = LightColour.Yellow;
+                        SetColour("FFFF00");
+                        break;
+                    case LightColour.White:
+                        CurrentColour = LightColour.White;
+                        SetColour("FFFFFF");
+                        break;
+                    case LightColour.Purple:
+                        CurrentColour = LightColour.Purple;
+                        SetColour("8400FF");
+                        break;
+                    case LightColour.Off:
+                        CurrentColour = LightColour.Off;
+                        TurnOffLights();
+                        break;
+                }
+            }
         }
     }
 }

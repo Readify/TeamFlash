@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using TeamFlash.Hue;
+using TeamFlash.TeamCity;
 
 namespace TeamFlash.Commands
 {
@@ -8,8 +9,6 @@ namespace TeamFlash.Commands
     {
         private string _ip;
         private string _lightsString;
-        private string _appKey;
-
 
         public HueCommand()
         {
@@ -21,8 +20,12 @@ namespace TeamFlash.Commands
         public override int Run(string[] remainingArguments)
         {
             var lights = string.IsNullOrEmpty(_lightsString) ? new List<string>{"1"} : _lightsString.Split(',').ToList();
-            buildLight = new HueBuildLight(_ip, lights);
+            BuildLight = new HueBuildLight(_ip, lights);
             return base.Run(remainingArguments);
+        }
+
+        protected override void RegisterBuildEvents(TeamCityBuildMonitor buildMonitor, int blinkInterval)
+        {
         }
     }
 }
