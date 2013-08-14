@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace TeamFlash
+namespace TeamFlash.TeamCity
 {
     public interface ITeamCityApi
     {

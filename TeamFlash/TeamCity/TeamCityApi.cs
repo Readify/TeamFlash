@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Web;
 using RestSharp;
 
-namespace TeamFlash
+namespace TeamFlash.TeamCity
 {
     public class TeamCityApi : ITeamCityApi
     {

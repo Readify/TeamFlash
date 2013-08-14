@@ -1,0 +1,525 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Q42.HueApi</name>
+    </assembly>
+    <members>
+        <member name="T:Q42.HueApi.HttpBridgeLocator">
+            <summary>
+            Uses the special nupnp url from meethue.com to find registered bridges based on your external IP
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.Interfaces.IBridgeLocator">
+            <summary>
+            Different platforms can make specific implementations of this interface
+            </summary>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IBridgeLocator.LocateBridgesAsync(System.TimeSpan)">
+            <summary>
+            Returns list of bridge IPs
+            </summary>
+            <param name="timeout"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HttpBridgeLocator.LocateBridgesAsync(System.TimeSpan)">
+            <summary>
+            Locate bridges
+            </summary>
+            <param name="timeout"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Q42.HueApi.HueColorConverter">
+            <summary>
+            Used to convert colors between XY and RGB
+            internal: Do not expose
+            </summary>
+            <summary>
+            Used to convert colors between XY and RGB
+            internal: Do not expose
+            </summary>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.XyFromColor(System.String,System.String,System.String)">
+            <summary>
+            Get XY from red,green,blue strings / ints
+            </summary>
+            <param name="red"></param>
+            <param name="green"></param>
+            <param name="blue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.XyFromColor(System.Int32,System.Int32,System.Int32)">
+            <summary>
+             Get XY from red,green,blue ints
+            </summary>
+            <param name="red"></param>
+            <param name="green"></param>
+            <param name="blue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.CheckPointInLampsReach(Q42.HueApi.CGPoint)">
+            <summary>
+             Method to see if the given XY value is within the reach of the lamps.
+            </summary>
+            <param name="p">p the point containing the X,Y value</param>
+            <returns>true if within reach, false otherwise.</returns>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.CrossProduct(Q42.HueApi.CGPoint,Q42.HueApi.CGPoint)">
+            <summary>
+            Calculates crossProduct of two 2D vectors / points.
+            </summary>
+            <param name="p1"> p1 first point used as vector</param>
+            <param name="p2">p2 second point used as vector</param>
+            <returns>crossProduct of vectors</returns>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.GetClosestPointToPoint(Q42.HueApi.CGPoint,Q42.HueApi.CGPoint,Q42.HueApi.CGPoint)">
+            <summary>
+            Find the closest point on a line.
+            This point will be within reach of the lamp.
+            </summary>
+            <param name="A">A the point where the line starts</param>
+            <param name="B">B the point where the line ends</param>
+            <param name="P">P the point which is close to a line.</param>
+            <returns> the point which is on the line.</returns>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.GetDistanceBetweenTwoPoints(Q42.HueApi.CGPoint,Q42.HueApi.CGPoint)">
+            <summary>
+            Find the distance between two points.
+            </summary>
+            <param name="one"></param>
+            <param name="two"></param>
+            <returns>the distance between point one and two</returns>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.HexFromState(Q42.HueApi.State)">
+            <summary>
+            Returns hexvalue from Light State
+            </summary>
+            <param name="state"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueColorConverter.HexFromXy(System.Double,System.Double)">
+            <summary>
+            Get the HEX color from an XY value
+            </summary>
+            <param name="xNumber"></param>
+            <param name="yNumber"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Q42.HueApi.CGPoint">
+            <summary>
+            Internal helper class, holds XY
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.Extensions.IEnumerableExtensions">
+            <summary>
+            IEnumerable Helpers
+            </summary>
+        </member>
+        <member name="M:Q42.HueApi.Extensions.IEnumerableExtensions.ForEachAsync``1(System.Collections.Generic.IEnumerable{``0},System.Int32,System.Func{``0,System.Threading.Tasks.Task})">
+            <summary>
+            http://blogs.msdn.com/b/pfxteam/archive/2012/03/04/10277325.aspx
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="source"></param>
+            <param name="dop"></param>
+            <param name="body"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Q42.HueApi.Interfaces.IHueClient">
+            <summary>
+            Hue Client for interaction with the bridge
+            </summary>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.Initialize(System.String)">
+            <summary>
+            Initialize the client with your app key
+            </summary>
+            <param name="appKey"></param>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.RegisterAsync(System.String,System.String)">
+            <summary>
+            Register your <paramref name="appName"/> and <paramref name="appKey"/> at the Hue Bridge.
+            </summary>
+            <param name="appKey">Secret key for your app. Must be at least 10 characters.</param>
+            <param name="appName">The name of your app or device.</param>
+            <returns><c>true</c> if success, <c>false</c> if the link button hasn't been pressed.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="appName"/> or <paramref name="appKey"/> is <c>null</c>.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="appName"/> or <paramref name="appKey"/> aren't long enough, are empty or contains spaces.</exception>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.SetNextHueColorAsync(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Set the next Hue color
+            </summary>
+            <param name="lightList"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.GetLightsAsync">
+            <summary>
+            Asynchronously gets all lights registered with the bridge.
+            </summary>
+            <returns>An enumerable of <see cref="T:Q42.HueApi.Light"/>s registered with the bridge.</returns>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.GetWhiteListAsync">
+            <summary>
+            Asynchronously gets all lights registered with the bridge.
+            </summary>
+            <returns>An enumerable of <see cref="T:Q42.HueApi.WhiteList"/>s registered with the bridge.</returns>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.GetLightAsync(System.String)">
+            <summary>
+            Asynchronously retrieves an individual light.
+            </summary>
+            <param name="id">The light's Id.</param>
+            <returns>The <see cref="T:Q42.HueApi.Light"/> if found, <c>null</c> if not.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="id"/> is <c>null</c>.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="id"/> is empty or a blank string.</exception>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.GetBridgeAsync">
+            <summary>
+            Get bridge info
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.DeleteWhiteListEntryAsync(System.String)">
+            <summary>
+            Deletes a whitelist entry
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.SendCommandRawAsync(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Send a raw string / json command
+            </summary>
+            <param name="command">json</param>
+            <param name="lightList">if null, send to all lights</param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.SendCommandAsync(Q42.HueApi.LightCommand,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Send a light command
+            </summary>
+            <param name="command">Compose a new lightCommand()</param>
+            <param name="lightList">if null, send to all lights</param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.Interfaces.IHueClient.SendGroupCommandAsync(Q42.HueApi.LightCommand,System.Int32)">
+            <summary>
+            Send command to a group
+            </summary>
+            <param name="command"></param>
+            <param name="group"></param>
+            <returns></returns>
+        </member>
+        <member name="P:Q42.HueApi.Interfaces.IHueClient.ApiBase">
+            <summary>
+            Base address url
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.HueClient">
+            <summary>
+            Responsible for communicating with the bridge
+            </summary>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.#ctor(System.String)">
+            <summary>
+            Initialize with Bridge IP
+            </summary>
+            <param name="ip"></param>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.#ctor(System.String,System.String)">
+            <summary>
+            Initialize with Bridge IP and AppKey
+            </summary>
+            <param name="ip"></param>
+            <param name="appKey"></param>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.Initialize(System.String)">
+            <summary>
+            Initialize client with your app key
+            </summary>
+            <param name="appKey"></param>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.CheckInitialized">
+            <summary>
+            Check if the HueClient is initialized
+            </summary>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.RegisterAsync(System.String,System.String)">
+            <summary>
+            Register your <paramref name="appName"/> and <paramref name="appKey"/> at the Hue Bridge.
+            </summary>
+            <param name="appKey">Secret key for your app. Must be at least 10 characters.</param>
+            <param name="appName">The name of your app or device.</param>
+            <returns><c>true</c> if success, <c>false</c> if the link button hasn't been pressed.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="appName"/> or <paramref name="appKey"/> is <c>null</c>.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="appName"/> or <paramref name="appKey"/> aren't long enough, are empty or contains spaces.</exception>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.SetNextHueColorAsync(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Set the next Hue color
+            </summary>
+            <param name="lightList"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.GetLightAsync(System.String)">
+            <summary>
+            Asynchronously retrieves an individual light.
+            </summary>
+            <param name="id">The light's Id.</param>
+            <returns>The <see cref="T:Q42.HueApi.Light"/> if found, <c>null</c> if not.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="id"/> is <c>null</c>.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="id"/> is empty or a blank string.</exception>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.GetLightsAsync">
+            <summary>
+            Asynchronously gets all lights registered with the bridge.
+            </summary>
+            <returns>An enumerable of <see cref="T:Q42.HueApi.Light"/>s registered with the bridge.</returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.GetWhiteListAsync">
+            <summary>
+            Asynchronously gets the whitelist with the bridge.
+            </summary>
+            <returns>An enumerable of <see cref="T:Q42.HueApi.WhiteList"/>s registered with the bridge.</returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.GetBridgeAsync">
+            <summary>
+            Get bridge info
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.DeleteWhiteListEntryAsync(System.String)">
+            <summary>
+            Deletes a whitelist entry
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.SendCommandAsync(Q42.HueApi.LightCommand,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Send a lightCommand to a list of lights
+            </summary>
+            <param name="command"></param>
+            <param name="lightList">if null, send command to all lights</param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.SendCommandRawAsync(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Send a json command to a list of lights
+            </summary>
+            <param name="command"></param>
+            <param name="lightList">if null, send command to all lights</param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.CreateLightList(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Create string of all the lights
+            </summary>
+            <param name="lights"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.SendGroupCommandAsync(Q42.HueApi.LightCommand,System.Int32)">
+            <summary>
+            Send command to a group
+            </summary>
+            <param name="command"></param>
+            <param name="group"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.HueClient.SendGroupCommandAsync(System.String,System.Int32)">
+            <summary>
+            Send command to a group
+            </summary>
+            <param name="command"></param>
+            <param name="group"></param>
+            <returns></returns>
+        </member>
+        <member name="P:Q42.HueApi.HueClient.IsInitialized">
+            <summary>
+            Indicates the HueClient is initialized with an AppKey
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.HueClient.ApiBase">
+            <summary>
+            Base URL for the API
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.BridgeBridge">
+            <summary>
+            Status data returned from the bridge
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.Bridge">
+            <summary>
+            Hue Bridge
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.Bridge.Lights">
+            <summary>
+            Light info from the bridge
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.Bridge.Config">
+            <summary>
+            Bridge config info
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.Bridge.WhiteList">
+            <summary>
+            Light info from the bridge
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.LightCommand">
+            <summary>
+            Compose a light command to send to a light
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.ColorCoordinates">
+            <summary>
+            Gets or sets the colors based on CIE 1931 Color coordinates.
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.Brightness">
+            <summary>
+            Gets or sets the brightness 0-255.
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.Hue">
+            <summary>
+            Gets or sets the hue for Hue and <see cref="P:Q42.HueApi.LightCommand.Saturation"/> mode.
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.Saturation">
+            <summary>
+            Gets or sets the saturation for <see cref="P:Q42.HueApi.LightCommand.Hue"/> and Saturation mode.
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.ColorTemperature">
+            <summary>
+            Gets or sets the Color Temperature
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.On">
+            <summary>
+            Gets or sets whether the light is on.
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.Effect">
+            <summary>
+            Gets or sets the current effect for the light.
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.Alert">
+            <summary>
+            Gets or sets the current alert for the light.
+            </summary>
+        </member>
+        <member name="P:Q42.HueApi.LightCommand.TransitionTime">
+            <summary>
+            Gets or sets the transition time for the light.
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.Alert">
+            <summary>
+            Possible light alerts
+            </summary>
+        </member>
+        <member name="F:Q42.HueApi.Alert.None">
+            <summary>
+            Stop alert
+            </summary>
+        </member>
+        <member name="F:Q42.HueApi.Alert.Once">
+            <summary>
+            Alert once
+            </summary>
+        </member>
+        <member name="F:Q42.HueApi.Alert.Multiple">
+            <summary>
+            Alert multiple times
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.Effect">
+            <summary>
+            Possible light effects
+            </summary>
+        </member>
+        <member name="F:Q42.HueApi.Effect.None">
+            <summary>
+            Stop current effect
+            </summary>
+        </member>
+        <member name="F:Q42.HueApi.Effect.ColorLoop">
+            <summary>
+            Color loop
+            </summary>
+        </member>
+        <member name="T:Q42.HueApi.lightCommandExtensions">
+            <summary>
+            Extension methods to compose a light command
+            </summary>
+        </member>
+        <member name="M:Q42.HueApi.lightCommandExtensions.SetColor(Q42.HueApi.LightCommand,System.String)">
+            <summary>
+            Helper to set the color based on a HEX value
+            </summary>
+            <param name="lightCommand"></param>
+            <param name="hexColor"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.lightCommandExtensions.SetColor(Q42.HueApi.LightCommand,System.String,System.String,System.String)">
+            <summary>
+            Helper to set the color based on RGB strings
+            </summary>
+            <param name="lightCommand"></param>
+            <param name="red"></param>
+            <param name="green"></param>
+            <param name="blue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.lightCommandExtensions.SetColor(Q42.HueApi.LightCommand,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Helper to set the color based on RGB
+            </summary>
+            <param name="lightCommand"></param>
+            <param name="red"></param>
+            <param name="green"></param>
+            <param name="blue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.lightCommandExtensions.SetColor(Q42.HueApi.LightCommand,System.Double,System.Double)">
+            <summary>
+            Helper to set the color based on the light's built in XY color schema
+            </summary>
+            <param name="lightCommand"></param>
+            <param name="x"></param>
+            <param name="y"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.lightCommandExtensions.SetColor(Q42.HueApi.LightCommand,System.Int32)">
+            <summary>
+            Helper to set the color based on the light's built in CT color scheme
+            </summary>
+            <param name="lightCommand"></param>
+            <param name="ct"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.lightCommandExtensions.TurnOn(Q42.HueApi.LightCommand)">
+            <summary>
+            Helper to create turn on command
+            </summary>
+            <param name="lightCommand"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Q42.HueApi.lightCommandExtensions.TurnOff(Q42.HueApi.LightCommand)">
+            <summary>
+            Helper to create turn off command
+            </summary>
+            <param name="lightCommand"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Q42.HueApi.NuPnPResponse">
+            <summary>
+            Model for response from http://www.meethue.com/api/nupnp
+            </summary>
+        </member>
+    </members>
+</doc>

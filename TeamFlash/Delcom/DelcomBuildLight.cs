@@ -5,11 +5,11 @@ using System.Threading;
 
 namespace TeamFlash.Delcom
 {
-    class Monitor
+    class DelcomBuildLight : IBuildLight
     {
         readonly object _lockObject = new Object();
 
-        public LedColour CurrentColour { get; private set; }
+        public LightColour CurrentColour { get; private set; }
 
         private void SetLed(byte led, bool turnItOn, bool flashIt, int? flashDurationInSeconds)
         {
@@ -79,22 +79,22 @@ namespace TeamFlash.Delcom
 
         public void TurnOnSuccessLight()
         {
-            ChangeColor(LedColour.Green);
+            ChangeColor(LightColour.Green);
         }
 
         public void TurnOnWarningLight()
         {
-            ChangeColor(LedColour.Yellow);
+            ChangeColor(LightColour.Yellow);
         }
 
         public void TurnOnFailLight()
         {
-            ChangeColor(LedColour.Red);
+            ChangeColor(LightColour.Red);
         }
 
         public void TurnOffLights()
         {
-            ChangeColor(LedColour.Off);
+            ChangeColor(LightColour.Off);
         }
 
         public void Blink()
@@ -105,7 +105,7 @@ namespace TeamFlash.Delcom
             ChangeColor(oldColour);
         }
 
-        public void BlinkThenRevert(LedColour colour, int blinkInterval = 100)
+        public void BlinkThenRevert(LightColour colour, int blinkInterval = 100)
         {
             var oldColour = CurrentColour;
             TurnOffLights();
@@ -121,7 +121,7 @@ namespace TeamFlash.Delcom
             var oldColour = CurrentColour;
             while (DateTime.Now < until)
             {
-                foreach (var color in Enum.GetValues(typeof (LedColour)).Cast<LedColour>())
+                foreach (var color in Enum.GetValues(typeof (LightColour)).Cast<LightColour>())
                 {
                     ChangeColor(color);
                     Thread.Sleep(100);
@@ -130,38 +130,38 @@ namespace TeamFlash.Delcom
             ChangeColor(oldColour);
         }
 
-        private void ChangeColor(LedColour colour)
+        private void ChangeColor(LightColour colour)
         {
             lock (_lockObject)
             {
                 switch (colour)
                 {
-                    case LedColour.Red:
-                        CurrentColour = LedColour.Red;
+                    case LightColour.Red:
+                        CurrentColour = LightColour.Red;
                         SetRGB(true, false, false);
                         break;
-                    case LedColour.Green:
-                        CurrentColour = LedColour.Green;
+                    case LightColour.Green:
+                        CurrentColour = LightColour.Green;
                         SetRGB(false, true,false);
                         break;
-                    case LedColour.Blue:
-                        CurrentColour = LedColour.Blue;
+                    case LightColour.Blue:
+                        CurrentColour = LightColour.Blue;
                         SetRGB(false, false,true);
                         break;
-                    case LedColour.Yellow:
-                        CurrentColour = LedColour.Yellow;
+                    case LightColour.Yellow:
+                        CurrentColour = LightColour.Yellow;
                         SetRGB(false, true,true);
                         break;
-                    case LedColour.White:
-                        CurrentColour = LedColour.White;
+                    case LightColour.White:
+                        CurrentColour = LightColour.White;
                         SetRGB(true, true,true);
                         break;
-                    case LedColour.Purple:
-                        CurrentColour = LedColour.Purple;
+                    case LightColour.Purple:
+                        CurrentColour = LightColour.Purple;
                         SetRGB(true, false,true);
                         break;
-                    case LedColour.Off:
-                        CurrentColour = LedColour.Off;
+                    case LightColour.Off:
+                        CurrentColour = LightColour.Off;
                         SetRGB(false, false,false);
                         break;
                 }
@@ -174,16 +174,5 @@ namespace TeamFlash.Delcom
             SetLed(DelcomBuildIndicator.GREENLED, green, false);
             SetLed(DelcomBuildIndicator.BLUELED, blue, false);
         }
-    }
-
-    internal enum LedColour
-    {
-        Red,
-        Blue,
-        Green,
-        Yellow,
-        White,
-        Purple,
-        Off
     }
 }

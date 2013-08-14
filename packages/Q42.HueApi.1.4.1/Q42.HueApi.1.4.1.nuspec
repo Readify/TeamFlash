@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Q42.HueApi</id>
+    <version>1.4.1</version>
+    <authors>Q42</authors>
+    <owners>Q42</owners>
+    <projectUrl>https://github.com/Q42/Q42.HueApi</projectUrl>
+    <iconUrl>http://a0.twimg.com/profile_images/2142700938/q42-logo-big-square.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Open source library for interaction with the Philips Hue Bridge. Allows you to control your lights from C#. Portable library works with .Net, Windows 8 and Windows Phone 8</description>
+    <summary>Open source library for interaction with the Philips Hue Bridge.</summary>
+    <language>en-US</language>
+    <tags>philips hue lights</tags>
+    <dependencies>
+      <dependency id="Newtonsoft.Json" />
+      <dependency id="Microsoft.Net.Http" version="2.1.10" />
+    </dependencies>
+    <references>
+      <reference file="Q42.HueApi.dll" />
+    </references>
+  </metadata>
+</package>
