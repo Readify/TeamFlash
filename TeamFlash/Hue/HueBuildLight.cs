@@ -36,14 +36,6 @@ namespace TeamFlash.Hue
             _hueClient.SendCommandAsync(command, _lights);
         }
 
-        public new void TurnOffLights()
-        {
-            var command = new LightCommand();
-            command.TurnOff();
-            command.Effect = Effect.None;
-            _hueClient.SendCommandAsync(command, _lights);
-        }
-
         protected override void ChangeColor(LightColour colour)
         {
             lock (_lockObject)
@@ -76,7 +68,10 @@ namespace TeamFlash.Hue
                         break;
                     case LightColour.Off:
                         CurrentColour = LightColour.Off;
-                        TurnOffLights();
+                        var command = new LightCommand();
+                        command.TurnOff();
+                        command.Effect = Effect.None;
+                        _hueClient.SendCommandAsync(command, _lights);
                         break;
                 }
             }
