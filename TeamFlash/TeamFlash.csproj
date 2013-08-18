@@ -76,6 +76,7 @@
     <Compile Include="BuildStatus.cs" />
     <Compile Include="Commands\CommandBase.cs" />
     <Compile Include="Commands\DelcomCommand.cs" />
+    <Compile Include="Commands\HueBridgeCommand.cs" />
     <Compile Include="Commands\HueCommand.cs" />
     <Compile Include="Commands\HueRegisterCommand.cs" />
     <Compile Include="BuildLightBase.cs" />
