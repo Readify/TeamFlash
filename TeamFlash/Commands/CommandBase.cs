@@ -14,7 +14,7 @@ namespace TeamFlash.Commands
         private string _specificProject = String.Empty;
         private bool _failOnFirstFailed;
         private string _buildLies = String.Empty;
-        private double _pollInterval = 60000;
+        private Int64 _pollInterval = 60000;
         protected IBuildLight BuildLight;
 
         protected CommandBase()
@@ -27,7 +27,7 @@ namespace TeamFlash.Commands
             HasOption("sp|specificproject=", "Constrain to a specific project", option => _specificProject = option);
             HasOption("f|failonfirstfailed", "Check until finding the first failed", option => _failOnFirstFailed = option != null);
             HasOption("l|lies=", "Lie for these builds, say they are green", option => _buildLies = option);
-            HasOption("i|interval", "Time interval in seconds to poll server.", option => _pollInterval = option != null ? Convert.ToDouble(option) : 60000);
+            HasOption("i|interval", "Time interval in milliseconds to poll server (default 60000, or 1 minute).", option => _pollInterval = option != null ? Convert.ToInt64(option) : 60000);
         }
 
         public override int Run(string[] remainingArguments)
@@ -63,9 +63,9 @@ namespace TeamFlash.Commands
             {
                 Console.WriteLine(e.ToString());
             }
-            while (!Console.KeyAvailable)
-            {
-            }
+
+            Console.ReadKey();
+
             if (buildMonitor != null) buildMonitor.Stop();
             BuildLight.TurnOffLights();
             return 0;

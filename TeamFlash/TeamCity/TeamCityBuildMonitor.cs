@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Timers;
+using System.Threading;
 
 namespace TeamFlash.TeamCity
 {
@@ -13,7 +13,7 @@ namespace TeamFlash.TeamCity
         private readonly string _specificProject;
         private readonly bool _failFast;
         private readonly List<string> _buildLies;
-        private readonly double _checkIntervalInSeconds;
+        private readonly Int64 _checkIntervalInMilliSeconds;
         public event EventHandler ServerCheckStarted = delegate { };
         public event EventHandler ServerCheckFinished = delegate { };
         public event EventHandler BuildChecked = delegate { };
@@ -28,10 +28,10 @@ namespace TeamFlash.TeamCity
         public event EventHandler ServerCheckException = delegate { };
         readonly object _lockObject = new object();
 
-        public TeamCityBuildMonitor(ITeamCityApi api, string specificProject, bool failFast, List<string> buildLies, double checkIntervalInSeconds)
+        public TeamCityBuildMonitor(ITeamCityApi api, string specificProject, bool failFast, List<string> buildLies, Int64 checkIntervalInMilliSeconds)
         {
             _api = api;
-            _checkIntervalInSeconds = checkIntervalInSeconds;
+            _checkIntervalInMilliSeconds = checkIntervalInMilliSeconds;
             _failFast = failFast;
             _specificProject = specificProject;
             _buildLies = buildLies;
@@ -39,20 +39,17 @@ namespace TeamFlash.TeamCity
 
         public void Start()
         {
-            CheckBuilds();
-            _timer = new Timer(_checkIntervalInSeconds) {AutoReset = true};
-            _timer.Elapsed += (sender, args) => CheckBuilds();
+            _timer = new Timer(CheckBuild, null, 0, _checkIntervalInMilliSeconds);
             ServerCheckStarted(this, new EventArgs());
-            _timer.Start();
         }
 
         public void Stop()
         {
-            _timer.Stop();
+            _timer.Change(Timeout.Infinite, Timeout.Infinite);
             ServerCheckFinished(this, new EventArgs());
         }
 
-        private void CheckBuilds()
+        private void CheckBuild(object state)
         {
             lock (_lockObject)
             {
