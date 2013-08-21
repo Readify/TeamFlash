@@ -198,6 +198,13 @@ namespace TeamFlash.TeamCity
             var response = GetSafeResponse<List<BuildType>>(request);
             return response.Data;
         }
+
+        public BuildType GetBuildTypeByBuildTypeId(string buildTypeId)
+        {
+            var request = GetXmlBuildRequest("app/rest/buildTypes/id:{ID}", new Dictionary<string, string>() { { "ID", HttpUtility.UrlEncode(buildTypeId) } });
+            var response = GetSafeResponse<BuildType>(request);
+            return response.Data;
+        }
     }
 
     public class BuildType

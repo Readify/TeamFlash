@@ -15,6 +15,7 @@ namespace TeamFlash.Commands
         private bool _failOnFirstFailed;
         private string _buildLies = String.Empty;
         private Int64 _pollInterval = 60000;
+        private List<string> _buildTypeIds;
         protected IBuildLight BuildLight;
 
         protected CommandBase()
@@ -28,7 +29,8 @@ namespace TeamFlash.Commands
             HasOption("f|failonfirstfailed", "Check until finding the first failed", option => _failOnFirstFailed = option != null);
             HasOption("l|lies=", "Lie for these builds, say they are green", option => _buildLies = option);
             HasOption("i|interval", "Time interval in milliseconds to poll server (default 60000, or 1 minute).", option => _pollInterval = option != null ? Convert.ToInt64(option) : 60000);
-        }
+            HasOption("b|biuldId=","Build Type Ids, comma delimited", option => _buildTypeIds = option.Split(';').ToList();
+}
 
         public override int Run(string[] remainingArguments)
         {

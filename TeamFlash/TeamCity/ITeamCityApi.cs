@@ -23,5 +23,6 @@ namespace TeamFlash.TeamCity
         Build GetLatestBuildByBuildType(string buildType);
         IEnumerable<Project> GetProjects();
         IEnumerable<BuildType> GetBuildTypesByProjectName(string specificProject);
+        BuildType GetBuildTypeByBuildTypeId(string buildTypeId);
     }
 }
