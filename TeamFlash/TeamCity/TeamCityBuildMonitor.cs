@@ -33,6 +33,7 @@ namespace TeamFlash.TeamCity
         {
             _api = api;
             _checkIntervalInMilliSeconds = checkIntervalInMilliSeconds;
+            _buildTypeIds = buildTypeIds;
             _failFast = failFast;
             _specificProject = specificProject;
             _buildLies = buildLies;
