@@ -66,7 +66,7 @@ namespace TeamFlash.TeamCity
                                 if (!loopState.IsStopped)
                                 {
                                     BuildChecked(this, new EventArgs());
-                                    if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                                    if (_buildLies.Contains(buildType.Name.ToLowerInvariant()) || _buildLies.Contains(buildType.Id.ToLowerInvariant()))
                                     {
                                         BuildSkipped(this, new EventArgs());
                                         return;
@@ -136,17 +136,12 @@ namespace TeamFlash.TeamCity
 
         private IEnumerable<BuildType> GetBuildTypeIds()
         {
-            if (_buildTypeIds != null && _buildLies.Any())
+            if (_buildTypeIds != null)
             {
                 return _buildTypeIds.Select(buildTypeId => _api.GetBuildTypeByBuildTypeId(buildTypeId)).ToList();
             }
             
-            if (!String.IsNullOrEmpty(_specificProject))
-            {
-                return _api.GetBuildTypesByProjectName(_specificProject);
-            }
-            
-            return _api.GetBuildTypes();
+            return !String.IsNullOrEmpty(_specificProject) ? _api.GetBuildTypesByProjectName(_specificProject) : _api.GetBuildTypes();
         }
     }
 }
