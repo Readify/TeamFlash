@@ -14,6 +14,7 @@ namespace TeamFlash.TeamCity
         private readonly bool _failFast;
         private readonly List<string> _buildLies;
         private readonly Int64 _checkIntervalInMilliSeconds;
+        private readonly IEnumerable<string> _buildTypeIds;
         public event EventHandler ServerCheckStarted = delegate { };
         public event EventHandler ServerCheckFinished = delegate { };
         public event EventHandler BuildChecked = delegate { };
@@ -28,10 +29,11 @@ namespace TeamFlash.TeamCity
         public event EventHandler ServerCheckException = delegate { };
         readonly object _lockObject = new object();
 
-        public TeamCityBuildMonitor(ITeamCityApi api, string specificProject, bool failFast, List<string> buildLies, Int64 checkIntervalInMilliSeconds)
+        public TeamCityBuildMonitor(ITeamCityApi api, string specificProject, bool failFast, List<string> buildLies, Int64 checkIntervalInMilliSeconds, IEnumerable<string> buildTypeIds)
         {
             _api = api;
             _checkIntervalInMilliSeconds = checkIntervalInMilliSeconds;
+            _buildTypeIds = buildTypeIds;
             _failFast = failFast;
             _specificProject = specificProject;
             _buildLies = buildLies;
@@ -56,16 +58,15 @@ namespace TeamFlash.TeamCity
                 var buildStatus = BuildStatus.Passed;
                 try
                 {
-                    var buildTypes = String.IsNullOrEmpty(_specificProject)
-                                         ? _api.GetBuildTypes().ToList()
-                                         : _api.GetBuildTypesByProjectName(_specificProject).ToList();
+                    var buildTypes = GetBuildTypeIds();
+
                     Parallel.ForEach(buildTypes.ToList(), (buildType, loopState) =>
                         {
                             {
                                 if (!loopState.IsStopped)
                                 {
                                     BuildChecked(this, new EventArgs());
-                                    if (_buildLies.Contains(buildType.Name.ToLowerInvariant()))
+                                    if (_buildLies.Contains(buildType.Name.ToLowerInvariant()) || _buildLies.Contains(buildType.Id.ToLowerInvariant()))
                                     {
                                         BuildSkipped(this, new EventArgs());
                                         return;
@@ -131,6 +132,16 @@ namespace TeamFlash.TeamCity
                     ServerCheckException(this, new EventArgs());
                 }
             }
+        }
+
+        private IEnumerable<BuildType> GetBuildTypeIds()
+        {
+            if (_buildTypeIds != null)
+            {
+                return _buildTypeIds.Select(buildTypeId => _api.GetBuildTypeByBuildTypeId(buildTypeId)).ToList();
+            }
+            
+            return !String.IsNullOrEmpty(_specificProject) ? _api.GetBuildTypesByProjectName(_specificProject) : _api.GetBuildTypes();
         }
     }
 }

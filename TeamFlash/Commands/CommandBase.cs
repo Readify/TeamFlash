@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ManyConsole;
 using TeamFlash.TeamCity;
 
@@ -15,6 +16,7 @@ namespace TeamFlash.Commands
         private bool _failOnFirstFailed;
         private string _buildLies = String.Empty;
         private Int64 _pollInterval = 60000;
+        private List<string> _buildTypeIds;
         protected IBuildLight BuildLight;
 
         protected CommandBase()
@@ -26,9 +28,10 @@ namespace TeamFlash.Commands
             HasOption("g|guest|guestauth", "Connect using anonymous guestAuth", option => _guestAuth = option != null);
             HasOption("sp|specificproject=", "Constrain to a specific project", option => _specificProject = option);
             HasOption("f|failonfirstfailed", "Check until finding the first failed", option => _failOnFirstFailed = option != null);
-            HasOption("l|lies=", "Lie for these builds, say they are green", option => _buildLies = option);
+            HasOption("l|lies=", "Lie for these builds, say they are green (semi-colon delimited list of Build Type Id or Build Name)", option => _buildLies = option);
             HasOption("i|interval", "Time interval in milliseconds to poll server (default 60000, or 1 minute).", option => _pollInterval = option != null ? Convert.ToInt64(option) : 60000);
-        }
+            HasOption("b|buildids=", "Specific Build Type Ids to check (semi-colon delimited list)", option => _buildTypeIds = option.Split(';').ToList());
+}
 
         public override int Run(string[] remainingArguments)
         {
@@ -43,7 +46,7 @@ namespace TeamFlash.Commands
             {
                 var lies = new List<string>(_buildLies.ToLowerInvariant().Split(';'));
                 ITeamCityApi api = new TeamCityApi(_serverUrl);
-                buildMonitor = new TeamCityBuildMonitor(api, _specificProject, _failOnFirstFailed, lies, _pollInterval);
+                buildMonitor = new TeamCityBuildMonitor(api, _specificProject, _failOnFirstFailed, lies, _pollInterval, _buildTypeIds);
                 const int blinkInterval = 30;
                 buildMonitor.CheckFailed += (sender, eventArgs) =>
                 {
