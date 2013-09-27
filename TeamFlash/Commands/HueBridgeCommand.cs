@@ -12,12 +12,14 @@ namespace TeamFlash.Commands
     {
         private string _timeoutString;
         private bool _scan;
+        private string _ip;
 
         public HueBridgeCommand()
         {
             IsCommand("huebridge", "Attempts to discover any Hue bridges on the network, and outputs their IP.");
             HasOption("t=|timeout=", "Maximum length of time in seconds to search for the bridge (default 15 seconds)", o => _timeoutString = o);
             HasOption("s|scan", "Use IP address range scanning to find the bridge", o => _scan = o != null);
+            HasOption("ip=", "Initial IP to use to calculate subnet (/24 only)", o => _ip = o);
             SkipsCommandSummaryBeforeRunning();
         }
         public override int Run(string[] remainingArguments)
@@ -25,7 +27,13 @@ namespace TeamFlash.Commands
             if (_scan)
             {
                 //TODO: Cant really assume /24 subnet...
-                var ip = String.Join(".",GetIpAddresss().Split('.').Take(3));
+                if (_ip != null && _ip.Split('.').Count() != 4)
+                {
+                    throw new ConsoleHelpAsException("Please provide valid IP address");
+                }
+
+                var initialIp = string.IsNullOrEmpty(_ip) ? GetIpAddresss() : _ip;
+                var ip = String.Join(".",initialIp.Split('.').Take(3));
                 Parallel.ForEach(Enumerable.Range(0, 254), (lastByte, state) =>
                     {
                         try
