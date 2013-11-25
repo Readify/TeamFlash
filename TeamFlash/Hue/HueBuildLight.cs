@@ -9,6 +9,8 @@ namespace TeamFlash.Hue
         private readonly HueClient _hueClient;
         private readonly List<string> _lights;
         private readonly object _lockObject = new object();
+        private readonly int _intensity;
+        private static readonly int MAX_INTENSITY = 100;
 
         public static string AppKey
         {
@@ -20,11 +22,21 @@ namespace TeamFlash.Hue
             get { return "TeamFlash"; }
         }
 
-        public HueBuildLight(string ip,IEnumerable<string> lights)
+        public HueBuildLight(string ip, IEnumerable<string> lights, string intensity)
         {
             _hueClient = new HueClient(ip);
             _hueClient.Initialize(AppKey);
             _lights = lights.ToList();
+
+            int parsedInt;
+            if (int.TryParse(intensity, out parsedInt))
+            {
+                _intensity = parsedInt;
+            }
+            else
+            {
+                _intensity = MAX_INTENSITY;
+            }
         }
 
         private void SetColour(string colour)
@@ -32,6 +44,7 @@ namespace TeamFlash.Hue
             var command = new LightCommand();
             command.TurnOn().SetColor(colour);
             command.Alert = Alert.Once;
+            command.Brightness = (byte)(((double)_intensity / (double)MAX_INTENSITY) * (double)(byte.MaxValue));
             command.Effect = Effect.None;
             _hueClient.SendCommandAsync(command, _lights);
         }
