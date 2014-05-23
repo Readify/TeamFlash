@@ -222,7 +222,8 @@ namespace TeamFlash
         List<Query> GetAllChildren()
         {
             var parentDocument = document;
-            var secondElement = parentDocument.Descendants().Skip(1);
+            var descendants = parentDocument == null ? Enumerable.Empty<XElement>() : parentDocument.Descendants();
+            var secondElement = descendants == null ? Enumerable.Empty<XElement>() : descendants.Skip(1);
             var childCount = secondElement.Count();
             if (childCount == 0)
             {

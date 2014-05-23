@@ -45,19 +45,19 @@ namespace TeamFlash
                 {
                     case BuildStatus.Unavailable:
                         buildLight.Off();
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Server unavailable");
+                        Logger.WriteLine("Build status not available");
                         break;
                     case BuildStatus.Passed:
                         buildLight.Success();
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Passed");
+                        Logger.WriteLine("Passed");
                         break;
                     case BuildStatus.Investigating:
                         buildLight.Warning();
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Investigating");
+                        Logger.WriteLine("Investigating");
                         break;
                     case BuildStatus.Failed:
                         buildLight.Fail();
-                        Console.WriteLine(DateTime.Now.ToShortTimeString() + " Failed");
+                        Logger.WriteLine("Failed");
                         break;
                 }
 
@@ -84,7 +84,7 @@ namespace TeamFlash
             }
             catch (Exception ex)
             {
-                Console.WriteLine("The following exception occurred loading the config file \"{0}\":{2}Message: {1}{2}Feel free to quit and fix it or re-enter your server details...", configFilePath, ex.Message, Environment.NewLine);
+                Logger.WriteLine("The following exception occurred loading the config file \"{0}\":{2}Message: {1}{2}Feel free to quit and fix it or re-enter your server details...", configFilePath, ex.Message, Environment.NewLine);
             }
             return new TeamFlashConfig();
         }
@@ -110,10 +110,10 @@ namespace TeamFlash
             string input = null;
             while (string.IsNullOrEmpty(input))
             {
-                Console.WriteLine("{0}?", name);
+                Logger.WriteLine("{0}?", name);
                 if (!string.IsNullOrEmpty(previousValue))
                 {
-                    Console.WriteLine("(press enter for previous value: {0})", previousValue);
+                    Logger.WriteLine("(press enter for previous value: {0})", previousValue);
                 }
                 input = Console.ReadLine();
                 if (!string.IsNullOrEmpty(previousValue) &&
@@ -155,6 +155,7 @@ namespace TeamFlash
                     {
                         continue;
                     }
+
                     foreach (var buildType in project.BuildTypes)
                     {
                         if (buildTypeIds.Any() &&
@@ -162,10 +163,12 @@ namespace TeamFlash
                         {
                             continue;
                         }
-                        if ("true".Equals(buildType.Paused, StringComparison.CurrentCultureIgnoreCase))
+
+                        if (buildType.PausedExists && "true".Equals(buildType.Paused, StringComparison.CurrentCultureIgnoreCase))
                         {
                             continue;
                         }
+
                         var builds = buildType.Builds;
                         var latestBuild = builds.First;
                         if (latestBuild == null)
@@ -229,8 +232,9 @@ namespace TeamFlash
 
                 }
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                Logger.WriteLine("An unexpected error occured: {0}{1}", Environment.NewLine, exception.ToString());
                 return BuildStatus.Unavailable;
             }
 

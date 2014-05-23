@@ -59,6 +59,7 @@
     <Compile Include="IBuildLight.cs" />
     <Compile Include="Linux\BuildLight.cs" />
     <Compile Include="Linux\DelcomBuildIndicator.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Monitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
