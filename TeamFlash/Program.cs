@@ -188,26 +188,30 @@ namespace TeamFlash
                             }
                         }
 
-                        var isUnstableBuild = false;
-                        foreach (var property in latestBuild.Properties)
+                        if (latestBuild.PropertiesExists)
                         {
-                            if ("system.BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                            "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                            var isUnstableBuild = false;
+                            foreach (var property in latestBuild.Properties)
                             {
-                                isUnstableBuild = true;
+                                if (
+                                    "system.BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
+                                    "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    isUnstableBuild = true;
+                                }
+
+                                if ("BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
+                                    "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    isUnstableBuild = true;
+
+                                }
                             }
 
-                            if ("BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
-                            "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))
+                            if (isUnstableBuild)
                             {
-                                isUnstableBuild = true;
-
+                                continue;
                             }
-                        }
-
-                        if (isUnstableBuild)
-                        {
-                            continue;
                         }
 
                         var buildId = buildType.Id;
