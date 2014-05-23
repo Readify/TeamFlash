@@ -73,8 +73,9 @@ namespace TeamFlash
             var configFilePath = Path.Combine(appDataPath, @"TeamFlash\config.json");
             try
             {
-                if (!File.Exists(configFilePath))
-                    return new TeamFlashConfig();
+                if (!File.Exists(configFilePath))return new TeamFlashConfig();
+
+                Logger.WriteLine("Reading config values from: {0}", configFilePath);
 
                 var serializer = new XmlSerializer(typeof(TeamFlashConfig));
                 using (var stream = File.OpenRead(configFilePath))
