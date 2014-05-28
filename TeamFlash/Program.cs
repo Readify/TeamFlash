@@ -209,7 +209,7 @@ namespace TeamFlash
                         }
 
                         var isUnstableBuild = false;
-                        foreach (var property in latestBuild.Properties)
+                        foreach (var property in latestBuild.Properties ?? new dynamic[0])
                         {
                             if ("system.BuildState".Equals(property.Name, StringComparison.CurrentCultureIgnoreCase) &&
                             "unstable".Equals(property.Value, StringComparison.CurrentCultureIgnoreCase))

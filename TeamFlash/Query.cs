@@ -92,7 +92,7 @@ namespace TeamFlash
                 if (!TryFind(bindingName, childDocument, out value, out selectedDecendants))
                 {
                     result = null;
-                    return false;
+                    return true;
                 }
             }
 
