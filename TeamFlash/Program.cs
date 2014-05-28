@@ -253,8 +253,9 @@ namespace TeamFlash
 
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.Error.WriteLine(e);
                 return BuildStatus.Unavailable;
             }
 
