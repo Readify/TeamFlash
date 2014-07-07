@@ -9,8 +9,12 @@ namespace TeamFlash
 {
     class Program
     {
+        internal static bool Verbose { get; private set; }
+
         static void Main()
         {
+            Logger.VerboseEnabled = PromptForVerboseMode();
+
             var teamFlashConfig = LoadConfig();
 
             teamFlashConfig.ServerUrl = ReadConfig("TeamCity URL", teamFlashConfig.ServerUrl);
@@ -65,6 +69,17 @@ namespace TeamFlash
             }
 
             buildLight.Off();
+        }
+
+        static bool PromptForVerboseMode()
+        {
+            Console.Write("Would you like to start in VERBOSE mode? (y/n)");
+            var selection = Console.ReadKey(true /*intercept*/).KeyChar;
+            Console.WriteLine();
+            var verbose = char.ToLower(selection) == 'y';
+            if(verbose) Console.WriteLine("VERBOSE mode is ON. Re-run TeamFlash in order to revert this.");
+            Console.WriteLine();
+            return verbose;
         }
 
         static TeamFlashConfig LoadConfig()
@@ -129,6 +144,7 @@ namespace TeamFlash
 
         static void Wait()
         {
+            Logger.Verbose("Waiting for 30 seconds.");
             var delayCount = 0;
             while (delayCount < 30 &&
                 !Console.KeyAvailable)
@@ -142,6 +158,8 @@ namespace TeamFlash
             string serverUrl, string username, string password,
             IEnumerable<string> buildTypeIds)
         {
+            Logger.Verbose("Checking build status.");
+
             buildTypeIds = buildTypeIds.ToArray();
 
             dynamic query = new Query(serverUrl, username, password);
@@ -152,6 +170,7 @@ namespace TeamFlash
             {
                 foreach (var project in query.Projects)
                 {
+                    Logger.Verbose("Checking Project '{0}'.", project.Name);
                     if (!project.BuildTypesExists)
                     {
                         continue;
@@ -159,14 +178,17 @@ namespace TeamFlash
 
                     foreach (var buildType in project.BuildTypes)
                     {
+                        Logger.Verbose("Checking Built Type '{0}\\{1}'.", project.Name, buildType.Name);
                         if (buildTypeIds.Any() &&
                             buildTypeIds.All(id => id != buildType.Id))
                         {
+                            Logger.Verbose("Bypassing Built Type '{0}\\{1}' because it does NOT match configured built-type list to monitor.", project.Name, buildType.Name);
                             continue;
                         }
 
                         if (buildType.PausedExists && "true".Equals(buildType.Paused, StringComparison.CurrentCultureIgnoreCase))
                         {
+                            Logger.Verbose("Bypassing Built Type '{0}\\{1}' because 'PausedExists' is set to 'true'.", project.Name, buildType.Name);
                             continue;
                         }
 
@@ -174,6 +196,7 @@ namespace TeamFlash
                         var latestBuild = builds.First;
                         if (latestBuild == null)
                         {
+                            Logger.Verbose("Bypassing Built Type '{0}\\{1}' because no built history is available to it yet.", project.Name, buildType.Name);
                             continue;
                         }
 
@@ -184,6 +207,7 @@ namespace TeamFlash
                             runningBuild.Load();
                             if ("success".Equals(runningBuild.Status, StringComparison.CurrentCultureIgnoreCase))
                             {
+                                Logger.Verbose("Bypassing Built Type '{0}\\{1}' because status of last build and all running builds are 'success'.", project.Name, buildType.Name);
                                 continue;
                             }
                         }
@@ -210,10 +234,12 @@ namespace TeamFlash
 
                             if (isUnstableBuild)
                             {
+                                Logger.Verbose("Bypassing Built Type '{0}\\{1}' because it is marked as 'unstable'.", project.Name, buildType.Name);
                                 continue;
                             }
                         }
 
+                        Logger.Verbose("Now checking investigation status of Built Type '{0}\\{1}'.", project.Name, buildType.Name);
                         var buildId = buildType.Id;
                         dynamic investigationQuery = new Query(serverUrl, username, password);
                         investigationQuery.RestBasePath = @"/httpAuth/app/rest/buildTypes/id:" + buildId + @"/";
@@ -225,12 +251,14 @@ namespace TeamFlash
                             if ("taken".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase) ||
                                 "fixed".Equals(investigationState, StringComparison.CurrentCultureIgnoreCase))
                             {
+                                Logger.Verbose("Investigation status of Built Type '{0}\\{1}' detected as either 'taken' or 'fixed'.", project.Name, buildType.Name);
                                 buildStatus = BuildStatus.Investigating;
                             }
                         }
 
                         if (buildStatus == BuildStatus.Failed)
                         {
+                            Logger.Verbose("Concluding status of Built Type '{0}\\{1}' as FAIL.", project.Name, buildType.Name);
                             return buildStatus;
                         }
                     }
@@ -245,6 +273,5 @@ namespace TeamFlash
 
             return buildStatus;
         }
-
     }
 }

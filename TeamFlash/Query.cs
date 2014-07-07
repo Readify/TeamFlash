@@ -202,14 +202,16 @@ namespace TeamFlash
 
             try
             {
+                Logger.Verbose("Invoking query '{0}'.", queryUrl);
                 using (var stream = client.OpenRead(queryUrl))
                 using (var reader = XmlReader.Create(stream, new XmlReaderSettings() { DtdProcessing = DtdProcessing.Ignore }))
                 {
                     return XDocument.Load(reader);
                 }
             }
-            catch
+            catch(Exception exception)
             {
+                Logger.Error(exception);
                 return null;
             }
         }
