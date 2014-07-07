@@ -9,8 +9,6 @@ namespace TeamFlash
 {
     class Program
     {
-        internal static bool Verbose { get; private set; }
-
         static void Main()
         {
             Logger.VerboseEnabled = PromptForVerboseMode();
