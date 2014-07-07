@@ -166,10 +166,10 @@ namespace TeamFlash
 
             try
             {
-                var countFindAnyProjects = false;
+                var couldFindProjects = false;
                 foreach (var project in query.Projects)
                 {
-                    countFindAnyProjects = true;
+                    couldFindProjects = true;
                     Logger.Verbose("Checking Project '{0}'.", project.Name);
                     if (!project.BuildTypesExists)
                     {
@@ -266,7 +266,7 @@ namespace TeamFlash
 
                 }
 
-                if (!countFindAnyProjects)
+                if (!couldFindProjects)
                 {
                     Logger.Verbose("No Projects found! Please ensure if TeamCity URL is valid and also TeamCity setup and credentials are correct.");
                     return BuildStatus.Unavailable;
