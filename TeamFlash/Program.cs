@@ -166,11 +166,14 @@ namespace TeamFlash
 
             try
             {
+                var countFindAnyProjects = false;
                 foreach (var project in query.Projects)
                 {
+                    countFindAnyProjects = true;
                     Logger.Verbose("Checking Project '{0}'.", project.Name);
                     if (!project.BuildTypesExists)
                     {
+                        Logger.Verbose("Bypassing Project '{0}' because it has no 'BuiltTypes' property defined.", project.Name);
                         continue;
                     }
 
@@ -186,7 +189,7 @@ namespace TeamFlash
 
                         if (buildType.PausedExists && "true".Equals(buildType.Paused, StringComparison.CurrentCultureIgnoreCase))
                         {
-                            Logger.Verbose("Bypassing Built Type '{0}\\{1}' because 'PausedExists' is set to 'true'.", project.Name, buildType.Name);
+                            Logger.Verbose("Bypassing Built Type '{0}\\{1}' because it has 'Paused' property set to 'true'.", project.Name, buildType.Name);
                             continue;
                         }
 
@@ -257,15 +260,21 @@ namespace TeamFlash
                         if (buildStatus == BuildStatus.Failed)
                         {
                             Logger.Verbose("Concluding status of Built Type '{0}\\{1}' as FAIL.", project.Name, buildType.Name);
-                            return buildStatus;
+                            return BuildStatus.Failed;
                         }
                     }
 
                 }
+
+                if (!countFindAnyProjects)
+                {
+                    Logger.Verbose("No Projects found! Please ensure if TeamCity URL is valid and also TeamCity setup and credentials are correct.");
+                    return BuildStatus.Unavailable;
+                }
             }
             catch (Exception exception)
             {
-                Logger.WriteLine("An unexpected error occured: {0}{1}", Environment.NewLine, exception.ToString());
+                Logger.Error(exception);
                 return BuildStatus.Unavailable;
             }
 
