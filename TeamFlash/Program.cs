@@ -113,7 +113,7 @@ namespace TeamFlash
             var configFilePath = Path.Combine(teamFlashPath, @"config.json");
 
             var serializer = new XmlSerializer(typeof(TeamFlashConfig));
-            using (var stream = File.OpenWrite(configFilePath))
+            using (var stream = File.Create(configFilePath))
             {
                 serializer.Serialize(stream, config);
             }
