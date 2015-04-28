@@ -18,15 +18,17 @@ namespace TeamFlash
             teamFlashConfig.ServerUrl = ReadConfig("TeamCity URL", teamFlashConfig.ServerUrl);
             teamFlashConfig.Username = ReadConfig("Username", teamFlashConfig.Username);
             var password = ReadConfig("Password", "");
-            teamFlashConfig.BuildTypeIds = ReadConfig("Comma separated build type ids (eg, \"bt64,bt12\"), or * for all", teamFlashConfig.BuildTypeIds);
+            teamFlashConfig.BuildTypeIds = ReadConfig("Comma separated build type ids to INCLUDE (eg, \"bt64,bt12\"), or * for ALL", teamFlashConfig.BuildTypeIds);
+            teamFlashConfig.BuildTypeIdsExcluded =
+                ReadConfig("Comma separated build type ids to EXCLUDE (eg, \"bt64,bt12\"), or * for NONE",
+                    teamFlashConfig.BuildTypeIdsExcluded);
 
             SaveConfig(teamFlashConfig);
 
             Console.Clear();
 
-            var buildTypeIds = teamFlashConfig.BuildTypeIds == "*"
-                ? new string[0]
-                : teamFlashConfig.BuildTypeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToArray();
+            var buildTypeIds = ConvertBuildTypeIdsToArray(teamFlashConfig.BuildTypeIds);
+            var buildTypeIdsExcluded = ConvertBuildTypeIdsToArray(teamFlashConfig.BuildTypeIdsExcluded);
 
 #if __MonoCS__
             var buildLight = new Linux.BuildLight();
@@ -42,7 +44,8 @@ namespace TeamFlash
                     teamFlashConfig.ServerUrl,
                     teamFlashConfig.Username,
                     password,
-                    buildTypeIds);
+                    buildTypeIds,
+                    buildTypeIdsExcluded);
                 switch (lastBuildStatus)
                 {
                     case BuildStatus.Unavailable:
@@ -69,13 +72,20 @@ namespace TeamFlash
             buildLight.Off();
         }
 
+        private static string[] ConvertBuildTypeIdsToArray(string buildTypeIds)
+        {
+            return buildTypeIds == "*"
+                ? new string[0]
+                : buildTypeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToArray();
+        }
+
         static bool PromptForVerboseMode()
         {
             Console.Write("Would you like to start in VERBOSE mode? (y/n)");
             var selection = Console.ReadKey(true /*intercept*/).KeyChar;
             Console.WriteLine();
             var verbose = char.ToLower(selection) == 'y';
-            if(verbose) Console.WriteLine("VERBOSE mode is ON. Re-run TeamFlash in order to revert this.");
+            if (verbose) Console.WriteLine("VERBOSE mode is ON. Re-run TeamFlash in order to revert this.");
             Console.WriteLine();
             return verbose;
         }
@@ -86,7 +96,7 @@ namespace TeamFlash
             var configFilePath = Path.Combine(appDataPath, @"TeamFlash\config.json");
             try
             {
-                if (!File.Exists(configFilePath))return new TeamFlashConfig();
+                if (!File.Exists(configFilePath)) return new TeamFlashConfig();
 
                 Logger.WriteLine("Reading config values from: {0}", configFilePath);
 
@@ -154,11 +164,12 @@ namespace TeamFlash
 
         static BuildStatus RetrieveBuildStatus(
             string serverUrl, string username, string password,
-            IEnumerable<string> buildTypeIds)
+            IEnumerable<string> buildTypeIds, IEnumerable<string> buildTypeIdsExcluded)
         {
             Logger.Verbose("Checking build status.");
 
             buildTypeIds = buildTypeIds.ToArray();
+            buildTypeIdsExcluded = buildTypeIdsExcluded.ToArray();
 
             dynamic query = new Query(serverUrl, username, password);
 
@@ -180,8 +191,10 @@ namespace TeamFlash
                     foreach (var buildType in project.BuildTypes)
                     {
                         Logger.Verbose("Checking Built Type '{0}\\{1}'.", project.Name, buildType.Name);
-                        if (buildTypeIds.Any() &&
-                            buildTypeIds.All(id => id != buildType.Id))
+                        if ((buildTypeIds.Any() &&
+                            buildTypeIds.All(id => id != buildType.Id)) ||
+                            (buildTypeIdsExcluded.Any() &&
+                            buildTypeIdsExcluded.All(id => id == buildType.id)))
                         {
                             Logger.Verbose("Bypassing Built Type '{0}\\{1}' because it does NOT match configured built-type list to monitor.", project.Name, buildType.Name);
                             continue;
