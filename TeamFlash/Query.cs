@@ -6,6 +6,7 @@ using System.Collections;
 using System.Xml.Linq;
 using System.Net;
 using System.Xml;
+using System.IO;
 
 namespace TeamFlash
 {
@@ -195,24 +196,36 @@ namespace TeamFlash
             {
                 client = new WebClient
                 {
-                    Credentials = new NetworkCredential(username, password)
+                    Credentials = new NetworkCredential(username, password),
+                    Headers = new WebHeaderCollection { "Accepts:text/xml" }
                 };
-                client.Headers.Add("Accepts:text/xml");
             }
-
+            
+            Stream stream = null;
             try
             {
                 Logger.Verbose("Invoking query '{0}'.", queryUrl);
-                using (var stream = client.OpenRead(queryUrl))
+                stream = client.OpenRead(queryUrl);
                 using (var reader = XmlReader.Create(stream, new XmlReaderSettings() { DtdProcessing = DtdProcessing.Ignore }))
                 {
                     return XDocument.Load(reader);
                 }
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 Logger.Error(exception);
                 return null;
+            }
+            finally
+            {
+                if (client != null)
+                {
+                    client.Dispose();
+                }
+                if (stream != null)
+                {
+                    stream.Dispose();
+                }
             }
         }
 
